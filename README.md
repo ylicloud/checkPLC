@@ -41,6 +41,51 @@
 | 前端 | 原生 HTML / CSS / JavaScript |
 | PLC 程序 | SCL（S7-1200/1500）、TIA Portal V20 |
 
+## 笔记本部署（质检现场）
+
+### 需要安装的软件
+
+| 软件 | 要求 | 用途 |
+|------|------|------|
+| **Windows** | 10 / 11（64 位） | 操作系统 |
+| **Python** | 3.10 或更高（建议 3.11） | 运行 Web 后端 |
+| **浏览器** | Chrome / Edge | 打开通检界面 |
+
+安装 Python 时务必勾选 **「Add python.exe to PATH」**。下载：https://www.python.org/downloads/
+
+**不需要**在质检笔记本上安装 TIA Portal、WinCC 或数据库——配置保存在本地 `configs/*.json` 文件中。
+
+连接真实 PLC 时，笔记本网口需与 PLC **同一网段**，防火墙放行 **TCP 102**。
+
+### 一键安装与启动
+
+| 文件 | 作用 |
+|------|------|
+| **`setup.bat`** | 首次运行：创建虚拟环境、安装依赖、可选生成语音词片 |
+| **`run.bat`** | 每次通检：启动 Web 服务并打开浏览器 |
+
+```
+1. 安装 Python 3.10+（勾选 Add to PATH）
+2. 拷贝或 git clone 整个 checkPLC 文件夹
+3. 双击 setup.bat          ← 仅首次
+4. 双击 run.bat            ← 每次通检
+5. 浏览器打开 http://127.0.0.1:8000
+```
+
+PowerShell 手动执行时须加 `.\` 前缀（不能直接输入脚本名）：
+
+```powershell
+cd D:\repos\checkPLC
+.\scripts\setup.ps1    # 安装
+.\scripts\run.ps1      # 启动
+```
+
+### 配置归档与复用
+
+每套控制柜在 Web **「配置」** 页填写模块信息后，输入配置名（如 `用户A_标准柜`）点 **「保存并下发」**，即归档为 `configs/用户A_标准柜.json`。
+
+下次检测同类型柜子：下拉加载已有配置，通常只需修改 PLC IP 即可开始通检。可与 TIA 工程归档一一对应管理。
+
 ## 快速开始（Mock 模式，无需 PLC）
 
 ```bash
@@ -99,7 +144,7 @@ python scripts/generate_wavs.py
 |------|------|
 | `enable` | 是否启用该槽位 |
 | `start_addr` | 过程映像起始字节地址 |
-| `channel_count` | 通道数（DI/DQ：8/16/32；AI/AQ：2/4/8 等） |
+| `channel_count` | 通道数（每模块 4～32，常见 DI/DQ：8/16/32；AI/AQ：4/8） |
 | `raw_full` / `eng_min_ma` / `eng_full_ma` | 仅 AI/AQ，默认 4～20 mA ↔ 0～27648 |
 
 全局通道号按槽位 1→20、槽内通道顺序连续编号。示例配置见 [configs/example_cabinet.json](configs/example_cabinet.json)。
@@ -108,6 +153,8 @@ python scripts/generate_wavs.py
 
 ```
 checkPLC/
+├── setup.bat             # 一键安装环境（Windows）
+├── run.bat               # 一键启动服务
 ├── configs/              # 每柜 JSON 配置
 ├── docs/                 # 需求、设计、TIA 导入说明
 │   ├── requirement.md
