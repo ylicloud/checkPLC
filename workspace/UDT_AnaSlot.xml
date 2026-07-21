@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Document>
+  <Engineering version="V20" />
+  <SW.Types.PlcStruct ID="0">
+    <AttributeList>
+      <Interface><Sections xmlns="http://www.siemens.com/automation/Openness/SW/Interface/v5">
+  <Section Name="None">
+    <Member Name="Enable" Datatype="Bool" />
+    <Member Name="StartAddr" Datatype="UInt" />
+    <Member Name="ChannelCount" Datatype="USInt" />
+    <Member Name="Reserved" Datatype="USInt" />
+    <Member Name="RawFull" Datatype="Int">
+      <StartValue>27648</StartValue>
+    </Member>
+    <Member Name="EngMax_mA" Datatype="Real">
+      <StartValue>20.0</StartValue>
+    </Member>
+    <Member Name="EngMin_mA" Datatype="Real">
+      <StartValue>4.0</StartValue>
+    </Member>
+  </Section>
+</Sections></Interface>
+      <Name>UDT_AnaSlot</Name>
+      <Namespace />
+    </AttributeList>
+    <ObjectList>
+      <MultilingualText ID="1" CompositionName="Comment">
+        <ObjectList>
+          <MultilingualTextItem ID="2" CompositionName="Items">
+            <AttributeList>
+              <Culture>zh-CN</Culture>
+              <Text>AI/AQ module slot 4-20mA</Text>
+            </AttributeList>
+          </MultilingualTextItem>
+        </ObjectList>
+      </MultilingualText>
+    </ObjectList>
+  </SW.Types.PlcStruct>
+</Document>

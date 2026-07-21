@@ -1,0 +1,13 @@
+(* UDT_AnaSlot - AI/AQ 模块槽，默认 4~20mA ↔ 0~27648 *)
+TYPE "UDT_AnaSlot"
+VERSION : 0.1
+  STRUCT
+    Enable       : Bool;
+    StartAddr    : UInt;   // 首通道 IW/QW 的字节地址
+    ChannelCount : USInt;
+    Reserved     : USInt;
+    RawFull      : Int;    // 默认 27648
+    EngMax_mA    : Real;   // 默认 20.0（量程上限）
+    EngMin_mA    : Real;   // 默认 4.0（量程下限，4~20mA）
+  END_STRUCT;
+END_TYPE

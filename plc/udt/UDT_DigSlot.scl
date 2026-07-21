@@ -1,0 +1,13 @@
+(* UDT_DigSlot - DI/DQ 模块槽
+   在 TIA 中：添加 PLC 数据类型 → 粘贴 STRUCT 成员，或从外部源生成
+   非优化 DB 中按 8 字节对齐使用（见 plc/README.md）
+*)
+TYPE "UDT_DigSlot"
+VERSION : 0.1
+  STRUCT
+    Enable       : Bool;   // 启用本槽
+    StartAddr    : UInt;   // 过程映像起始字节 IB/QB
+    ChannelCount : USInt;  // 8 / 16 / 32
+    Reserved     : USInt;
+  END_STRUCT;
+END_TYPE

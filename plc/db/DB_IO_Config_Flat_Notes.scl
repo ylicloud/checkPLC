@@ -1,0 +1,14 @@
+(* 扁平布局参考（当 UDT 数组偏移与文档不一致时，可按此手工建非优化 DB）
+   便于与 Web 端固定偏移 100% 对齐。
+
+DATA_BLOCK "DB_IO_Config_Flat"
+  非优化，总长 960 字节：
+  DI: 20 * 8 = 160 @0
+  DQ: 20 * 8 = 160 @160
+  AI: 20 * 16 = 320 @320
+  AQ: 20 * 16 = 320 @640
+
+  每 DigSlot: Byte Enable; Byte pad; UInt StartAddr; USInt Count; Byte pad[2]
+  每 AnaSlot: Byte Enable; Byte pad; UInt StartAddr; USInt Count; Byte pad;
+              Int RawFull; Real EngFull_mA; Byte pad[4]
+*)

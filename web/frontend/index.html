@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PLC IO 通检 Portal</title>
+  <link rel="stylesheet" href="/static/css/app.css?v=20260722b" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">质检查线 · IO 通检</div>
+    <nav class="tabs" id="tabs">
+      <button data-page="connect" class="active">连接</button>
+      <button data-page="config">配置</button>
+      <button data-page="di">DI</button>
+      <button data-page="ai">AI</button>
+      <button data-page="dq">DQ</button>
+      <button data-page="aq">AQ</button>
+    </nav>
+    <div class="status" id="connStatus">未连接</div>
+  </header>
+
+  <main>
+    <section id="page-connect" class="page active">
+      <h1>连接 PLC</h1>
+      <p class="hint">首次可勾选 Mock 模式，无需真实 PLC 验证界面与语音。</p>
+      <div class="form-grid">
+        <label>IP <input id="plcIp" value="192.168.0.1" /></label>
+        <label>机架 <input id="plcRack" type="number" value="0" /></label>
+        <label>槽位 <input id="plcSlot" type="number" value="1" /></label>
+        <label>配置 DB <input id="dbConfig" type="number" value="10" /></label>
+        <label>运行 DB <input id="dbRuntime" type="number" value="11" /></label>
+        <label class="check"><input id="mockMode" type="checkbox" checked /> Mock 模式</label>
+      </div>
+      <div class="row">
+        <button class="primary" id="btnConnect">连接</button>
+        <button id="btnDisconnect">断开</button>
+      </div>
+      <p id="connectMsg" class="msg"></p>
+    </section>
+
+    <section id="page-config" class="page">
+      <h1>柜配置（每类最多 20 槽，只勾选实际模块）</h1>
+      <div class="row">
+        <label>配置名 <input id="cfgName" value="example_cabinet" /></label>
+        <select id="cfgList"></select>
+        <button id="btnLoadCfg">加载</button>
+        <button class="primary" id="btnSaveCfg">保存并下发</button>
+      </div>
+      <div class="slot-tools">
+        <button data-kind="di">DI 槽</button>
+        <button data-kind="dq">DQ 槽</button>
+        <button data-kind="ai">AI 槽</button>
+        <button data-kind="aq">AQ 槽</button>
+      </div>
+      <div id="slotEditor"></div>
+      <h2 class="sub-title">已启用模块 · IO 地址一览</h2>
+      <p class="hint">按「起始字节 + 通道序号」推算，请与 TIA 设备视图中的地址对照。</p>
+      <div class="table-wrap">
+        <table id="addrMapTable">
+          <thead>
+            <tr><th>类型</th><th>槽</th><th>名称</th><th>起始字节</th><th>点数</th><th>地址范围</th><th>逐点地址</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="page-di" class="page">
+      <h1>DI 通道检测</h1>
+      <div class="hero-num" id="diHero">—</div>
+      <p class="hero-sub" id="diText">等待上升沿…</p>
+      <div class="chips" id="diChips"></div>
+      <div class="table-wrap" style="margin-top:1rem">
+        <table id="diAddrTable">
+          <thead><tr><th>全局通道</th><th>槽</th><th>槽内点</th><th>地址</th><th>状态</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="mock-box" id="diMock">
+        <h3>Mock 模拟</h3>
+        <button id="btnMockDi">模拟 DI 通道1 上升沿</button>
+      </div>
+    </section>
+
+    <section id="page-ai" class="page">
+      <h1>AI 通道检测</h1>
+      <div class="hero-num" id="aiHero">—</div>
+      <p class="hero-sub" id="aiText">等待电流变化…</p>
+      <div class="table-wrap">
+        <table id="aiTable"><thead><tr><th>通道</th><th>地址</th><th>mA</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="mock-box">
+        <h3>Mock 模拟</h3>
+        <button id="btnMockAi">模拟 AI 通道1 ≈5mA</button>
+      </div>
+    </section>
+
+    <section id="page-dq" class="page">
+      <h1>DQ 强制输出</h1>
+      <div class="row">
+        <label>模块槽
+          <select id="dqSlot"></select>
+        </label>
+        <button id="btnDqResetSlot">复位本槽</button>
+        <button id="btnDqResetAll">全部复位</button>
+      </div>
+      <p class="hint" id="dqHint">先点「连接」。Mock 下按钮变绿即表示强制成功；真机需已下载 FC_IO_Apply。</p>
+      <p class="msg" id="dqStatus"></p>
+      <p class="hint" id="dqAddrHint"></p>
+      <div class="dq-grid" id="dqGrid"></div>
+    </section>
+
+    <section id="page-aq" class="page">
+      <h1>AQ 监视（程序自动 4、5、6… mA）</h1>
+      <div class="table-wrap">
+        <table id="aqTable"><thead><tr><th>通道</th><th>地址</th><th>设定 mA</th></tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/js/voice.js?v=20260722b"></script>
+  <script src="/static/js/app.js?v=20260722b"></script>
+</body>
+</html>

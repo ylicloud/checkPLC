@@ -1,0 +1,117 @@
+(* FC_IO_Apply
+   DQ 强制 → Q；AQ 阶梯电流 → QW（4~20mA）
+   S7-1200：PEEK/POKE 字节；不用 ROUND/LINT（1200 不支持 LINT）
+*)
+FUNCTION "FC_IO_Apply" : Void
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+VAR_TEMP
+  slot : Int;
+  ch : Int;
+  globalCh : Int;
+  byteIndex : Int;
+  bitIndex : USInt;
+  forceDword : DWORD;
+  bitVal : Bool;
+  qByte : Byte;
+  mask : Byte;
+  startAddr : UInt;
+  chCount : Int;
+  mA : Real;
+  raw : Int;
+  rawFull : Int;
+  engMax : Real;
+  engMin : Real;
+  span : Real;
+  tmpReal : Real;
+  hiByte : Byte;
+  loByte : Byte;
+  wordVal : UInt;
+  nShift : USInt;
+  hiUInt : UInt;
+END_VAR
+BEGIN
+  "DB_IO_Runtime".Heartbeat := "DB_IO_Runtime".Heartbeat + UINT#1;
+
+  // ---- DQ：强制位 → Q ----
+  FOR slot := 1 TO 20 DO
+    IF "DB_IO_Config".DQ[slot].Enable THEN
+      startAddr := "DB_IO_Config".DQ[slot].StartAddr;
+      chCount := USINT_TO_INT("DB_IO_Config".DQ[slot].ChannelCount);
+      IF chCount > 32 THEN
+        chCount := 32;
+      END_IF;
+      forceDword := "DB_IO_Runtime".DQ_Force[slot];
+      FOR ch := 0 TO chCount - 1 DO
+        nShift := INT_TO_USINT(ch);
+        bitVal := (forceDword AND SHL(IN := DWORD#1, N := nShift)) <> DWORD#0;
+        byteIndex := UINT_TO_INT(startAddr) + (ch / 8);
+        bitIndex := INT_TO_USINT(ch MOD 8);
+        qByte := PEEK(area := 16#82,
+                      dbNumber := 0,
+                      byteOffset := byteIndex);
+        mask := SHL(IN := BYTE#1, N := bitIndex);
+        IF bitVal THEN
+          qByte := qByte OR mask;
+        ELSE
+          qByte := qByte AND (NOT mask);
+        END_IF;
+        POKE(area := 16#82,
+             dbNumber := 0,
+             byteOffset := byteIndex,
+             value := qByte);
+      END_FOR;
+    END_IF;
+  END_FOR;
+
+  // ---- AQ：阶梯电流 ----
+  globalCh := 0;
+  FOR slot := 1 TO 20 DO
+    IF "DB_IO_Config".AQ[slot].Enable THEN
+      startAddr := "DB_IO_Config".AQ[slot].StartAddr;
+      chCount := USINT_TO_INT("DB_IO_Config".AQ[slot].ChannelCount);
+      rawFull := "DB_IO_Config".AQ[slot].RawFull;
+      engMax := "DB_IO_Config".AQ[slot].EngMax_mA;
+      engMin := "DB_IO_Config".AQ[slot].EngMin_mA;
+      IF engMax <= engMin THEN
+        engMax := 20.0;
+        engMin := 4.0;
+      END_IF;
+      IF rawFull = 0 THEN
+        rawFull := 27648;
+      END_IF;
+      span := engMax - engMin;
+      FOR ch := 0 TO chCount - 1 DO
+        globalCh := globalCh + 1;
+        IF globalCh > 160 THEN
+          EXIT;
+        END_IF;
+        mA := INT_TO_REAL(3 + globalCh);
+        "DB_IO_Runtime".AQ_mA[globalCh] := mA;
+        tmpReal := (mA - engMin) / span * INT_TO_REAL(rawFull);
+        // 不用 ROUND（会引入 LINT）；正数截断即可
+        IF tmpReal <= 0.0 THEN
+          raw := 0;
+        ELSIF tmpReal >= INT_TO_REAL(rawFull) THEN
+          raw := rawFull;
+        ELSE
+          raw := REAL_TO_INT(tmpReal);
+        END_IF;
+        wordVal := INT_TO_UINT(raw);
+        hiUInt := wordVal / UINT#256;
+        hiByte := UINT_TO_BYTE(hiUInt);
+        loByte := UINT_TO_BYTE(wordVal - hiUInt * UINT#256);
+        byteIndex := UINT_TO_INT(startAddr) + ch * 2;
+        POKE(area := 16#82,
+             dbNumber := 0,
+             byteOffset := byteIndex,
+             value := hiByte);
+        POKE(area := 16#82,
+             dbNumber := 0,
+             byteOffset := byteIndex + 1,
+             value := loByte);
+      END_FOR;
+    END_IF;
+  END_FOR;
+
+END_FUNCTION

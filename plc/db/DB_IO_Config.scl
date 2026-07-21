@@ -1,0 +1,16 @@
+(* DB_IO_Config - 建议编号 DB10
+   属性：取消「优化的块访问」
+   AI/AQ 初值：RawFull=27648，EngMax_mA=20.0，EngMin_mA=4.0（4~20mA）
+*)
+DATA_BLOCK "DB_IO_Config"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 0.1
+NON_RETAIN
+  STRUCT
+    DI : Array[1..20] of "UDT_DigSlot";
+    DQ : Array[1..20] of "UDT_DigSlot";
+    AI : Array[1..20] of "UDT_AnaSlot";
+    AQ : Array[1..20] of "UDT_AnaSlot";
+  END_STRUCT;
+BEGIN
+END_DATA_BLOCK

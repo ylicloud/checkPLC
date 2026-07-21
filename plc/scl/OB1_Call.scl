@@ -1,0 +1,7 @@
+(* OB1 调用示例：将下列网络逻辑并入现有 Main / OB1 *)
+ORGANIZATION_BLOCK "Main"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+BEGIN
+  "FC_IO_Apply"();
+END_ORGANIZATION_BLOCK

@@ -1,0 +1,12 @@
+(* DB_IO_Runtime - 建议编号 DB11，属性：非优化块访问 *)
+DATA_BLOCK "DB_IO_Runtime"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 0.1
+NON_RETAIN
+  STRUCT
+    DQ_Force : Array[1..20] of DWORD;   // bit0 = 槽内通道1
+    AQ_mA    : Array[1..160] of Real;   // 全局通道设定 mA 监视
+    Heartbeat : UInt;
+  END_STRUCT;
+BEGIN
+END_DATA_BLOCK
