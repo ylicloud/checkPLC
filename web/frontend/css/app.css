@@ -168,6 +168,13 @@ th { color: var(--muted); font-weight: 600; }
   border: 1px dashed var(--line);
   border-radius: 10px;
 }
+.mock-box button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.mock-box .mock-hint { margin: 0.5rem 0 0; font-size: 0.85rem; }
+.mock-box .mock-hint.warn { color: var(--warn); }
+.mock-box .mock-hint.ok { color: var(--ok); }
 @media (max-width: 800px) {
   .slot-card, .slot-card.ana { grid-template-columns: 1fr 1fr; }
 }

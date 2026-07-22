@@ -28,6 +28,7 @@ class SaveConfigRequest(BaseModel):
     name: str
     cabinet: dict[str, Any]
     push_to_plc: bool = True
+    persist: bool = True  # False=只下发内存/PLC，不改写 configs/*.json
 
 
 class MockDiRequest(BaseModel):

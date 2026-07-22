@@ -70,6 +70,36 @@ function refreshConnStatus() {
   } else {
     setStatus("未连接");
   }
+  updateMockUi();
+}
+
+function updateMockUi() {
+  const canMock = plcConnected && plcMock;
+  const diBtn = $("btnMockDi");
+  const aiBtn = $("btnMockAi");
+  if (diBtn) diBtn.disabled = !canMock;
+  if (aiBtn) aiBtn.disabled = !canMock;
+
+  const diHint = $("diMockHint");
+  const aiHint = $("aiMockHint");
+  let hint = "须在「连接」页勾选 Mock 并连接后使用";
+  let cls = "hint mock-hint warn";
+  if (!plcConnected) {
+    hint = "请先在「连接」页点击连接";
+  } else if (!plcMock) {
+    hint = "当前为真实 PLC 连接，DI/AI 模拟按钮不可用（请断开并勾选 Mock 后重连）";
+  } else {
+    hint = "Mock 已就绪，可点击下方按钮模拟";
+    cls = "hint mock-hint ok";
+  }
+  if (diHint) {
+    diHint.textContent = hint;
+    diHint.className = cls;
+  }
+  if (aiHint) {
+    aiHint.textContent = hint;
+    aiHint.className = cls;
+  }
 }
 
 function applyConnFromSnap(snap) {
@@ -104,6 +134,7 @@ function forceSum(arr) {
 
 async function api(path, opts = {}) {
   const res = await fetch(path, {
+    cache: "no-store",
     headers: { "Content-Type": "application/json" },
     ...opts,
   });
@@ -132,15 +163,42 @@ function showPage(name) {
   if (name === "aq") renderAqTable(lastAqValues);
 }
 
-async function refreshConfigList() {
+const LAST_CFG_KEY = "checkplc_last_config";
+
+async function refreshConfigList(preferName) {
   const { items } = await api("/api/configs");
   const sel = $("cfgList");
+  const want =
+    preferName ||
+    $("cfgName")?.value?.trim() ||
+    localStorage.getItem(LAST_CFG_KEY) ||
+    sel.value ||
+    "";
   sel.innerHTML = items.map((n) => `<option value="${n}">${n}</option>`).join("");
+  if (want && items.includes(want)) sel.value = want;
+  else if (items.includes("example_cabinet")) sel.value = "example_cabinet";
+  else if (items.length) sel.value = items[0];
+  return items;
 }
 
 async function loadCabinet(name) {
-  cabinet = await api("/api/configs/" + encodeURIComponent(name));
-  $("cfgName").value = name;
+  const safe = sanitizeConfigName(name);
+  // 强行绕过缓存：每次加载带时间戳
+  const data = await api("/api/configs/" + encodeURIComponent(safe) + "?t=" + Date.now());
+  // 去掉服务端附加的 _meta，避免写回污染
+  const meta = data._meta;
+  delete data._meta;
+  cabinet = data;
+  // 统一 enable 为布尔值
+  for (const k of ["di", "dq", "ai", "aq"]) {
+    for (const s of cabinet[k] || []) {
+      s.enable = !!s.enable;
+    }
+  }
+  $("cfgName").value = safe;
+  const sel = $("cfgList");
+  if (sel && [...sel.options].some((o) => o.value === safe)) sel.value = safe;
+  localStorage.setItem(LAST_CFG_KEY, safe);
   $("plcIp").value = cabinet.plc?.ip || "192.168.0.1";
   $("plcRack").value = cabinet.plc?.rack ?? 0;
   $("plcSlot").value = cabinet.plc?.slot ?? 1;
@@ -149,11 +207,67 @@ async function loadCabinet(name) {
   dqBuiltKey = "";
   renderSlots();
   ensureDqSlotOptions();
+  renderAddrMapTable();
+  return meta;
+}
+
+/** 保存前从当前槽位编辑器同步，避免未失焦的输入丢失 */
+function collectSlotsFromDom() {
+  if (!cabinet) return;
+  const host = $("slotEditor");
+  if (!host) return;
+  const kind = host.dataset.kind || currentKind;
+  host.querySelectorAll(".slot-card").forEach((card) => {
+    const slot = Number(card.dataset.slot);
+    const item = (cabinet[kind] || []).find((x) => Number(x.slot) === slot);
+    if (!item) return;
+    card.querySelectorAll("[data-f]").forEach((inp) => {
+      const f = inp.dataset.f;
+      if (f === "enable") item.enable = !!inp.checked;
+      else if (f === "name") item.name = inp.value;
+      else if (f === "eng_full_ma" || f === "eng_min_ma") item[f] = Number(inp.value);
+      else item[f] = Number(inp.value);
+    });
+  });
+}
+
+function countEnabled(cab) {
+  const c = cab || cabinet || {};
+  return ["di", "dq", "ai", "aq"].map(
+    (k) => `${k.toUpperCase()}:${(c[k] || []).filter((s) => !!s.enable).length}`
+  );
+}
+
+function sanitizeConfigName(name) {
+  const cleaned = String(name || "")
+    .trim()
+    .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_")
+    .replace(/\.+$/g, "");
+  return cleaned || "cabinet";
+}
+
+function updateSlotPreview(card, item) {
+  if (!card || !item) return;
+  const kind = $("slotEditor")?.dataset.kind || currentKind;
+  let preview = card.querySelector(".addr-preview");
+  if (!preview) {
+    preview = document.createElement("div");
+    preview.className = "addr-preview";
+    card.appendChild(preview);
+  }
+  if (item.enable) {
+    preview.style.color = "";
+    preview.textContent = `地址: ${slotAddrSummary(kind, item)}　|　${slotAddrList(kind, item, 8)}`;
+  } else {
+    preview.style.color = "var(--muted)";
+    preview.textContent = "未启用";
+  }
 }
 
 function renderSlots() {
   if (!cabinet) return;
   const host = $("slotEditor");
+  host.dataset.kind = currentKind;
   const list = cabinet[currentKind] || [];
   const ana = currentKind === "ai" || currentKind === "aq";
   host.innerHTML = list
@@ -162,7 +276,7 @@ function renderSlots() {
         ? `<div class="addr-preview">地址: ${slotAddrSummary(currentKind, s)}　|　${slotAddrList(currentKind, s, 8)}</div>`
         : `<div class="addr-preview" style="color:var(--muted)">未启用</div>`;
       return `<div class="slot-card ${ana ? "ana" : ""}" data-slot="${s.slot}">
-        <label class="check"><input type="checkbox" data-f="enable" ${s.enable ? "checked" : ""}/> #${s.slot}</label>
+        <label class="check"><input type="checkbox" data-f="enable" ${s.enable ? "checked" : ""}/> 启用 #${s.slot}</label>
         <label>名称<input data-f="name" value="${s.name || ""}"/></label>
         <label>起始字节<input data-f="start_addr" type="number" value="${s.start_addr}"/></label>
         <label>通道数<input data-f="channel_count" type="number" value="${s.channel_count}"/></label>
@@ -180,21 +294,26 @@ function renderSlots() {
 
   host.querySelectorAll(".slot-card").forEach((card) => {
     card.querySelectorAll("[data-f]").forEach((inp) => {
-      inp.addEventListener("change", () => {
+      const apply = () => {
+        const kind = host.dataset.kind || currentKind;
         const slot = Number(card.dataset.slot);
-        const item = cabinet[currentKind].find((x) => x.slot === slot);
+        const item = (cabinet[kind] || []).find((x) => Number(x.slot) === slot);
+        if (!item) return;
         const f = inp.dataset.f;
-        if (f === "enable") item.enable = inp.checked;
+        if (f === "enable") item.enable = !!inp.checked;
         else if (f === "name") item.name = inp.value;
         else if (f === "eng_full_ma" || f === "eng_min_ma") item[f] = Number(inp.value);
         else item[f] = Number(inp.value);
-        if (currentKind === "dq") {
+        if (kind === "dq") {
           dqBuiltKey = "";
           ensureDqSlotOptions();
         }
-        renderSlots();
+        if (f === "enable") updateSlotPreview(card, item);
         renderAddrMapTable();
-      });
+      };
+      // 仅用 change，避免 checkbox 的 input+change 双触发导致状态被重建冲掉
+      inp.addEventListener("change", apply);
+      if (inp.type !== "checkbox") inp.addEventListener("input", apply);
     });
   });
   renderAddrMapTable();
@@ -429,7 +548,8 @@ function renderAqTable(values) {
 }
 
 
-async function poll() {
+async function poll(opts = {}) {
+  const silent = !!opts.silent;
   try {
     const snap = await api("/api/snapshot");
     applyConnFromSnap(snap);
@@ -466,7 +586,7 @@ async function poll() {
         $("aiHero").textContent = String(ev.channel);
         $("aiText").textContent = ev.text;
       }
-      Voice.announce(ev);
+      if (!silent) Voice.announce(ev);
     }
     if (snap.error) $("connectMsg").textContent = "扫描: " + snap.error;
   } catch {
@@ -482,6 +602,8 @@ document.getElementById("tabs").addEventListener("click", (e) => {
 document.querySelector(".slot-tools").addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-kind]");
   if (!btn) return;
+  // 切换 DI/DQ/AI/AQ 前先把当前页勾选写回内存
+  collectSlotsFromDom();
   currentKind = btn.dataset.kind;
   document.querySelectorAll(".slot-tools button").forEach((b) => b.classList.toggle("active", b === btn));
   renderSlots();
@@ -511,9 +633,15 @@ $("btnConnect").onclick = async () => {
     if (r.config_error) msg += " | " + r.config_error;
     $("connectMsg").textContent = msg;
     if (cabinet) {
+      // 连接时只下发到 PLC，绝不改写 configs/*.json，避免覆盖刚保存的 AI/AQ
+      collectSlotsFromDom();
+      collectPlcIntoCabinet();
+      const name = sanitizeConfigName($("cfgName").value) || localStorage.getItem(LAST_CFG_KEY) || "example_cabinet";
+      $("cfgName").value = name;
+      cabinet.name = name;
       await api("/api/configs", {
         method: "POST",
-        body: JSON.stringify({ name: $("cfgName").value.trim(), cabinet, push_to_plc: true }),
+        body: JSON.stringify({ name, cabinet, push_to_plc: true, persist: false }),
       });
     }
   } catch (e) {
@@ -539,21 +667,61 @@ $("btnDisconnect").onclick = async () => {
 };
 
 $("btnLoadCfg").onclick = async () => {
-  await loadCabinet($("cfgList").value);
+  const name = sanitizeConfigName($("cfgList").value || $("cfgName").value);
+  if (!name) return alert("请先在下拉框选择要加载的配置");
+  $("cfgName").value = name;
+  try {
+    const meta = await loadCabinet(name);
+    const enabled = meta?.enabled
+      ? ["di", "dq", "ai", "aq"].map((k) => `${k.toUpperCase()}:${meta.enabled[k] || 0}`).join(" ")
+      : countEnabled().join(" ");
+    alert(`已加载: ${name}\n启用 ${enabled}`);
+  } catch (e) {
+    alert("加载失败: " + e.message);
+  }
+};
+
+$("cfgList").onchange = () => {
+  if ($("cfgList").value) $("cfgName").value = $("cfgList").value;
 };
 
 $("btnSaveCfg").onclick = async () => {
+  collectSlotsFromDom();
   collectPlcIntoCabinet();
-  const name = $("cfgName").value.trim() || "cabinet";
+  const name = sanitizeConfigName($("cfgName").value);
+  $("cfgName").value = name;
+  if (!cabinet) return alert("配置未加载");
+  cabinet.name = name;
+  const enabledSummary = countEnabled(cabinet).join(" ");
   try {
+    const payload = JSON.parse(JSON.stringify(cabinet));
     const r = await api("/api/configs", {
       method: "POST",
-      body: JSON.stringify({ name, cabinet, push_to_plc: true }),
+      body: JSON.stringify({ name, cabinet: payload, push_to_plc: true, persist: true }),
     });
-    await refreshConfigList();
-    dqBuiltKey = "";
-    ensureDqSlotOptions();
-    alert(r.pushed ? "已保存并下发到 PLC" : "已保存到本地（未连接则未下发）");
+    const saved = r.name || name;
+    localStorage.setItem(LAST_CFG_KEY, saved);
+    $("cfgName").value = saved;
+    if (r.cabinet) {
+      cabinet = r.cabinet;
+      for (const k of ["di", "dq", "ai", "aq"]) {
+        for (const s of cabinet[k] || []) s.enable = !!s.enable;
+      }
+      dqBuiltKey = "";
+      renderSlots();
+      ensureDqSlotOptions();
+      renderAddrMapTable();
+    }
+    await refreshConfigList(saved);
+    const after = r.enabled
+      ? ["di", "dq", "ai", "aq"].map((k) => `${k.toUpperCase()}:${r.enabled[k] || 0}`).join(" ")
+      : countEnabled(cabinet).join(" ");
+    alert(
+      (r.pushed ? "已保存并下发到 PLC\n" : "已保存到本地（未连接则未下发）\n") +
+        `文件: configs/${saved}.json\n` +
+        `保存时启用 ${enabledSummary}\n` +
+        `落盘后启用 ${after}`
+    );
   } catch (e) {
     alert(e.message);
   }
@@ -581,31 +749,70 @@ $("btnDqResetAll").onclick = async () => {
 };
 
 $("btnMockDi").onclick = async () => {
+  if (!plcConnected || !plcMock) {
+    return alert("请先在「连接」页勾选 Mock 模式并连接");
+  }
   const s = (cabinet?.di || []).find((x) => x.enable);
-  if (!s) return alert("无启用 DI 槽");
-  await api("/api/mock/di", {
-    method: "POST",
-    body: JSON.stringify({ start_addr: s.start_addr, bit: 0, value: false }),
-  });
-  setTimeout(() => {
-    api("/api/mock/di", {
+  if (!s) return alert("无启用 DI 槽，请先在「配置」页勾选 DI 模块并保存");
+  const msg = $("diMockMsg");
+  try {
+    await Voice.unlock();
+    if (msg) msg.textContent = "模拟中…";
+    // 先拉低，确保扫描器看到 OFF，再置高触发上升沿
+    await api("/api/mock/di", {
+      method: "POST",
+      body: JSON.stringify({ start_addr: s.start_addr, bit: 0, value: false }),
+    });
+    await new Promise((r) => setTimeout(r, 200));
+    const r = await api("/api/mock/di", {
       method: "POST",
       body: JSON.stringify({ start_addr: s.start_addr, bit: 0, value: true }),
     });
-  }, 80);
+    const ch = r.channel || 1;
+    if (r.channel == null) {
+      if (msg) msg.textContent = "已写入 Mock 位，但未匹配到 DI 配置（请配置页保存后重试）";
+    } else {
+      $("diHero").textContent = String(ch);
+      $("diText").textContent = "通道 " + ch;
+      if (msg) msg.textContent = `已模拟 DI 通道 ${ch} 上升沿`;
+    }
+    // 按钮播报一次；silent poll 只刷新指示灯，不再播报
+    Voice.announce({ kind: "di", channel: ch });
+    await poll({ silent: true });
+  } catch (e) {
+    if (msg) msg.textContent = "";
+    alert("DI 模拟失败: " + e.message);
+  }
 };
 
 $("btnMockAi").onclick = async () => {
+  if (!plcConnected || !plcMock) {
+    return alert("请先在「连接」页勾选 Mock 模式并连接");
+  }
   const s = (cabinet?.ai || []).find((x) => x.enable);
-  if (!s) return alert("无启用 AI 槽");
-  // 4~20mA：raw=0→4mA；模拟约 5mA 便于触发变化播报
-  await api("/api/mock/ai", {
-    method: "POST",
-    body: JSON.stringify({
-      start_addr: s.start_addr,
-      raw: Math.round(((5 - 4) / 16) * 27648),
-    }),
-  });
+  if (!s) return alert("无启用 AI 槽，请先在「配置」页勾选 AI 模块并保存");
+  const msg = $("aiMockMsg");
+  try {
+    await Voice.unlock();
+    if (msg) msg.textContent = "模拟中…";
+    const r = await api("/api/mock/ai", {
+      method: "POST",
+      body: JSON.stringify({
+        start_addr: s.start_addr,
+        raw: Math.round(((5 - 4) / 16) * 27648),
+      }),
+    });
+    const ch = r.channel || 1;
+    const ma = r.ma != null ? r.ma : 5;
+    $("aiHero").textContent = String(ch);
+    $("aiText").textContent = `通道 ${ch}，${Number(ma).toFixed(1)} mA`;
+    Voice.announce({ kind: "ai", channel: ch, ma });
+    await poll({ silent: true });
+    if (msg) msg.textContent = `已模拟 AI 通道 ${ch} ≈${Number(ma).toFixed(1)}mA`;
+  } catch (e) {
+    if (msg) msg.textContent = "";
+    alert("AI 模拟失败: " + e.message);
+  }
 };
 
 $("dqSlot").onchange = () => {
@@ -615,14 +822,28 @@ $("dqSlot").onchange = () => {
 
 (async function init() {
   document.querySelector('.slot-tools button[data-kind="di"]').classList.add("active");
+  document.body.addEventListener("click", () => Voice.unlock(), { once: false, passive: true });
+  Voice.reset();
   await Voice.preload();
+  // 丢弃服务端残留播报队列，避免刷新后连播
+  try {
+    await api("/api/events/clear", { method: "POST", body: "{}" });
+  } catch {
+    /* ignore */
+  }
   await refreshConfigList();
-  const name = $("cfgList").value || "example_cabinet";
+  const items = [...$("cfgList").options].map((o) => o.value);
+  const last = localStorage.getItem(LAST_CFG_KEY);
+  const name =
+    (last && items.includes(last) && last) ||
+    $("cfgList").value ||
+    "example_cabinet";
   try {
     await loadCabinet(name);
   } catch {
     /* empty */
   }
-  pollTimer = setInterval(poll, 100);
-  poll();
+  await poll({ silent: true });
+  pollTimer = setInterval(() => poll(), 100);
+  updateMockUi();
 })();

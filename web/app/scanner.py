@@ -67,6 +67,22 @@ class IoScanner:
                 out.append(self._queue.popleft())
             return out
 
+    def clear_events(self) -> int:
+        """丢弃未播报事件（页面刷新 / 重新连接时避免连播旧队列）。"""
+        with self._lock:
+            n = len(self._queue)
+            self._queue.clear()
+            return n
+
+    def reset_announce_state(self) -> None:
+        """连接或刷新时重置播报相关状态。"""
+        with self._lock:
+            self._queue.clear()
+            self._active_di = None
+            self._active_ai = None
+            self._prev_di.clear()
+            self._prev_ai.clear()
+
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             dq_q_masks = [0] * 20
@@ -160,6 +176,87 @@ class IoScanner:
                         bridge._mock_q[start + bi] = byte_val  # noqa: SLF001
 
 
+    def inject_di_rising(self, start_addr: int, bit: int) -> Optional[int]:
+        """Mock 专用：按过程映像地址注入一次 DI 上升沿播报（不依赖扫描时序）。"""
+        with self._lock:
+            cabinet = self._cabinet
+            if not cabinet:
+                return None
+            gmap = db_layout.global_channel_map(cabinet, "di")
+            for s in cabinet.get("di", []) or []:
+                if not s.get("enable"):
+                    continue
+                start = int(s["start_addr"])
+                n = int(s["channel_count"])
+                slot = int(s["slot"])
+                for ch in range(n):
+                    byte_i = start + ch // 8
+                    bit_i = ch % 8
+                    if byte_i != start_addr or bit_i != bit:
+                        continue
+                    global_ch = next((g for g, ss, c in gmap if ss == slot and c == ch), None)
+                    if global_ch is None:
+                        return None
+                    self._prev_di[(slot, ch)] = True
+                    self._di_states[global_ch] = True
+                    self._active_di = global_ch
+                    # 不入队：由前端按钮播报一次，避免与 poll 事件重复
+                    return global_ch
+            return None
+
+    def inject_ai_change(self, start_addr: int, raw: int) -> Optional[tuple[int, float]]:
+        """Mock 专用：按 AI 起始地址更新状态（播报由前端触发一次）。"""
+        with self._lock:
+            cabinet = self._cabinet
+            if not cabinet:
+                return None
+            gmap = db_layout.global_channel_map(cabinet, "ai")
+            for s in cabinet.get("ai", []) or []:
+                if not s.get("enable"):
+                    continue
+                if int(s["start_addr"]) != start_addr:
+                    continue
+                slot = int(s["slot"])
+                conf = s
+                raw_full = float(conf.get("raw_full", 27648) or 27648)
+                eng_max = float(conf.get("eng_full_ma", 20.0) or 20.0)
+                eng_min = float(conf.get("eng_min_ma", 4.0) or 4.0)
+                if eng_max <= eng_min:
+                    eng_min, eng_max = 4.0, 20.0
+                span = eng_max - eng_min
+                r = int(raw)
+                if r >= 0x8000:
+                    r -= 0x10000
+                ma = eng_min + (r / raw_full) * span if raw_full else eng_min
+                global_ch = next((g for g, ss, c in gmap if ss == slot and c == 0), None)
+                if global_ch is None:
+                    return None
+                self._prev_ai[global_ch] = ma
+                self._ai_values[global_ch] = ma
+                self._active_ai = (global_ch, ma)
+                # 不入队：由前端按钮播报一次
+                return (global_ch, ma)
+            return None
+
+    def note_mock_di(self, start_addr: int, bit: int, value: bool) -> None:
+        """Mock 拉低/置高时同步 prev，避免扫描线程再入队一次上升沿。"""
+        with self._lock:
+            cabinet = self._cabinet
+            if not cabinet:
+                return
+            for s in cabinet.get("di", []) or []:
+                if not s.get("enable"):
+                    continue
+                start = int(s["start_addr"])
+                n = int(s["channel_count"])
+                slot = int(s["slot"])
+                for ch in range(n):
+                    byte_i = start + ch // 8
+                    bit_i = ch % 8
+                    if byte_i == start_addr and bit_i == bit:
+                        self._prev_di[(slot, ch)] = bool(value)
+                        return
+
     def _loop(self) -> None:
         while True:
             # 整段扫描持锁，避免与 set_dq_bit 竞态把 Force 冲成 0
@@ -234,7 +331,8 @@ class IoScanner:
                 if global_ch is None:
                     continue
                 self._di_states[global_ch] = val
-                if prev is False and val is True:
+                # 上升沿：False→True，以及首次 None→True（避免 Mock 短脉冲被跳过）
+                if val and prev is not True:
                     self._active_di = global_ch
                     self._queue.append(
                         AnnounceEvent(

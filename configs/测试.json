@@ -1,5 +1,5 @@
 {
-  "name": "example_cabinet",
+  "name": "?????DI16_DQ16_AI8_AQ4",
   "plc": {
     "ip": "192.168.100.10",
     "rack": 0,
@@ -300,8 +300,7 @@
       "channel_count": 8,
       "name": "AI8",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 2,
@@ -310,8 +309,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 3,
@@ -320,8 +318,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 4,
@@ -330,8 +327,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 5,
@@ -340,8 +336,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 6,
@@ -350,8 +345,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 7,
@@ -360,8 +354,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 8,
@@ -370,8 +363,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 9,
@@ -380,8 +372,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 10,
@@ -390,8 +381,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 11,
@@ -400,8 +390,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 12,
@@ -410,8 +399,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 13,
@@ -420,8 +408,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 14,
@@ -430,8 +417,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 15,
@@ -440,8 +426,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 16,
@@ -450,8 +435,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 17,
@@ -460,8 +444,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 18,
@@ -470,8 +453,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 19,
@@ -480,8 +462,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 20,
@@ -490,8 +471,7 @@
       "channel_count": 8,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     }
   ],
   "aq": [
@@ -502,8 +482,7 @@
       "channel_count": 4,
       "name": "AQ4",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 2,
@@ -512,8 +491,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 3,
@@ -522,8 +500,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 4,
@@ -532,8 +509,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 5,
@@ -542,8 +518,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 6,
@@ -552,8 +527,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 7,
@@ -562,8 +536,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 8,
@@ -572,8 +545,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 9,
@@ -582,8 +554,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 10,
@@ -592,8 +563,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 11,
@@ -602,8 +572,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 12,
@@ -612,8 +581,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 13,
@@ -622,8 +590,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 14,
@@ -632,8 +599,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 15,
@@ -642,8 +608,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 16,
@@ -652,8 +617,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 17,
@@ -662,8 +626,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 18,
@@ -672,8 +635,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 19,
@@ -682,8 +644,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     },
     {
       "slot": 20,
@@ -692,8 +653,7 @@
       "channel_count": 4,
       "name": "",
       "raw_full": 27648,
-      "eng_full_ma": 20,
-      "eng_min_ma": 4
+      "eng_full_ma": 20
     }
   ],
   "ai_announce_threshold_ma": 0.5

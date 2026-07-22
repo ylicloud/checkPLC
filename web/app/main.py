@@ -57,28 +57,65 @@ def configs() -> dict:
 @app.get("/api/configs/{name}")
 def get_config(name: str) -> dict:
     try:
-        return config_store.load_config(name)
+        cab = config_store.load_config(name)
+        return {
+            **cab,
+            "_meta": {
+                "name": config_store.safe_config_name(name),
+                "path": str(config_store.config_path(name)),
+                "enabled": config_store.enabled_counts(cab),
+            },
+        }
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
     except FileNotFoundError as exc:
         raise HTTPException(404, str(exc)) from exc
 
 
 @app.post("/api/configs")
 def save_config(body: SaveConfigRequest) -> dict:
-    config_store.save_config(body.name, body.cabinet)
-    scanner.set_cabinet(body.cabinet)
-    plc = body.cabinet.get("plc", {})
+    try:
+        safe = config_store.safe_config_name(body.name)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    cab = body.cabinet
+    if body.persist:
+        try:
+            saved_name = config_store.save_config(body.name, body.cabinet)
+            cab = config_store.load_config(saved_name)
+            safe = saved_name
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+    else:
+        # 仅更新内存，不改磁盘（避免「连接」时用旧状态覆盖已保存配置）
+        cab = dict(body.cabinet or {})
+        cab["name"] = safe
+
+    scanner.set_cabinet(cab)
+    plc = cab.get("plc", {})
     bridge.db_config = int(plc.get("db_config", 10))
     bridge.db_runtime = int(plc.get("db_runtime", 11))
     pushed = False
     if body.push_to_plc and bridge.connected:
         scanner.push_config_to_plc()
         pushed = True
-    return {"ok": True, "pushed": pushed}
+    enabled = config_store.enabled_counts(cab)
+    return {
+        "ok": True,
+        "pushed": pushed,
+        "persisted": bool(body.persist),
+        "name": safe,
+        "cabinet": cab,
+        "enabled": enabled,
+        "path": str(config_store.config_path(safe)),
+    }
 
 
 @app.post("/api/connect")
 def connect(body: ConnectRequest) -> dict:
     try:
+        scanner.reset_announce_state()
         bridge.db_config = body.db_config
         bridge.db_runtime = body.db_runtime
         bridge.connect(body.ip, body.rack, body.slot, mock=body.mock)
@@ -110,8 +147,15 @@ def disconnect() -> dict:
             scanner.reset_dq(None)
     except Exception:  # noqa: BLE001
         pass
+    scanner.reset_announce_state()
     bridge.disconnect()
     return {"ok": True, "connected": False}
+
+
+@app.post("/api/events/clear")
+def clear_events() -> dict:
+    n = scanner.clear_events()
+    return {"ok": True, "cleared": n}
 
 
 @app.get("/api/snapshot")
@@ -152,7 +196,11 @@ def mock_di(body: MockDiRequest) -> dict:
     if not bridge.mock:
         raise HTTPException(400, "仅 mock 模式可用")
     bridge.mock_set_di_bit(body.start_addr, body.bit, body.value)
-    return {"ok": True}
+    scanner.note_mock_di(body.start_addr, body.bit, body.value)
+    channel = None
+    if body.value:
+        channel = scanner.inject_di_rising(body.start_addr, body.bit)
+    return {"ok": True, "channel": channel}
 
 
 @app.post("/api/mock/ai")
@@ -160,7 +208,12 @@ def mock_ai(body: MockAiRequest) -> dict:
     if not bridge.mock:
         raise HTTPException(400, "仅 mock 模式可用")
     bridge.mock_set_ai_raw(body.start_addr, body.raw)
-    return {"ok": True}
+    info = scanner.inject_ai_change(body.start_addr, body.raw)
+    return {
+        "ok": True,
+        "channel": info[0] if info else None,
+        "ma": info[1] if info else None,
+    }
 
 
 @app.get("/")

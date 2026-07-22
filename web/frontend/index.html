@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>PLC IO 通检 Portal</title>
-  <link rel="stylesheet" href="/static/css/app.css?v=20260722b" />
+  <link rel="stylesheet" href="/static/css/app.css?v=20260722e" />
 </head>
 <body>
   <header class="top">
@@ -41,6 +41,7 @@
 
     <section id="page-config" class="page">
       <h1>柜配置（每类最多 20 槽，只勾选实际模块）</h1>
+      <p class="hint">保存会写入 <code>configs/配置名.json</code>；刷新后自动加载上次使用的配置。切换 DI/DQ/AI/AQ 后，请勾选槽位左侧的「启用」才会纳入通检。</p>
       <div class="row">
         <label>配置名 <input id="cfgName" value="example_cabinet" /></label>
         <select id="cfgList"></select>
@@ -79,7 +80,9 @@
       </div>
       <div class="mock-box" id="diMock">
         <h3>Mock 模拟</h3>
-        <button id="btnMockDi">模拟 DI 通道1 上升沿</button>
+        <p class="hint mock-hint" id="diMockHint">须在「连接」页勾选 Mock 并连接后使用</p>
+        <button type="button" id="btnMockDi">模拟 DI 通道1 上升沿</button>
+        <p class="msg" id="diMockMsg"></p>
       </div>
     </section>
 
@@ -90,9 +93,11 @@
       <div class="table-wrap">
         <table id="aiTable"><thead><tr><th>通道</th><th>地址</th><th>mA</th></tr></thead><tbody></tbody></table>
       </div>
-      <div class="mock-box">
+      <div class="mock-box" id="aiMock">
         <h3>Mock 模拟</h3>
-        <button id="btnMockAi">模拟 AI 通道1 ≈5mA</button>
+        <p class="hint mock-hint" id="aiMockHint">须在「连接」页勾选 Mock 并连接后使用</p>
+        <button type="button" id="btnMockAi">模拟 AI 通道1 ≈5mA</button>
+        <p class="msg" id="aiMockMsg"></p>
       </div>
     </section>
 
@@ -119,7 +124,7 @@
     </section>
   </main>
 
-  <script src="/static/js/voice.js?v=20260722b"></script>
-  <script src="/static/js/app.js?v=20260722b"></script>
+  <script src="/static/js/voice.js?v=20260722k"></script>
+  <script src="/static/js/app.js?v=20260722k"></script>
 </body>
 </html>
