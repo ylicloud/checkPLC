@@ -1,8 +1,11 @@
-"""Generate Chinese WAV voice clips for low-latency playback.
+"""Generate Chinese voice clips for low-latency playback.
 
 Requires: pip install edge-tts
 Usage:  python scripts/generate_wavs.py
-Output: web/frontend/assets/voice/*.wav
+Output: web/frontend/assets/voice/*.mp3
+
+优先生成 1~32 整段数字（与播报简化读音一致，如 21→二一），
+前端直接播一整段，比「十+一」拼接或浏览器 TTS 更快。
 """
 
 from __future__ import annotations
@@ -13,40 +16,53 @@ from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[1] / "web" / "frontend" / "assets" / "voice"
 
-CLIPS = {
-    "tongdao": "通道",
-    "haoan": "毫安",
-    "dian": "点",
-    "shi": "十",
-    "0": "零",
-    "1": "一",
-    "2": "二",
-    "3": "三",
-    "4": "四",
-    "5": "五",
-    "6": "六",
-    "7": "七",
-    "8": "八",
-    "9": "九",
-    "10": "十",
-}
-
 VOICE = "zh-CN-XiaoxiaoNeural"
+# 略提速：edge-tts rate；前端还可再设 playbackRate
+RATE = "+20%"
 
 
-async def gen_one(name: str, text: str) -> None:
+def zh_number(n: int) -> str:
+    """与 scanner / voice.js 一致：>20 不读「十」（21→二一）。"""
+    digits = "零一二三四五六七八九"
+    if n <= 10:
+        return ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][n]
+    if n < 20:
+        return "十" + (digits[n - 10] if n > 10 else "")
+    if n < 100:
+        tens, ones = divmod(n, 10)
+        if ones == 0:
+            return digits[tens] + "十"
+        return digits[tens] + digits[ones]
+    return str(n)
+
+
+def build_clips() -> dict[str, str]:
+    clips: dict[str, str] = {
+        "tongdao": "通道",
+        "haoan": "毫安",
+        "dian": "点",
+        "shi": "十",
+    }
+    # 个位词片（AI 毫安拼接兜底）
+    for i in range(0, 11):
+        clips[str(i)] = zh_number(i)
+    # 1~32 整段：通道号直播
+    for i in range(1, 33):
+        clips[str(i)] = zh_number(i)
+    # 常用毫安整段（4~20），AI 可「通道+毫安」两段拼完
+    for i in range(4, 21):
+        clips[f"ma{i}"] = f"{zh_number(i)}毫安"
+    return clips
+
+
+async def gen_one(name: str, text: str, sem: asyncio.Semaphore) -> None:
     import edge_tts
 
-    path = OUT / f"{name}.wav"
-    # edge-tts writes mp3 by default; use communicate and save as mp3 then note —
-    # For WAV, use mp3 and let browser play, or use communicate with raw.
-    # Simpler: save as mp3 with .mp3 and update voice.js — but plan says wav.
-    # edge-tts output is mp3. We'll save .mp3 and also try.
-    mp3 = OUT / f"{name}.mp3"
-    communicate = edge_tts.Communicate(text, VOICE)
-    await communicate.save(str(mp3))
-    # Keep mp3; voice.js will be updated to try mp3 if wav missing — actually update to use mp3
-    print("wrote", mp3)
+    async with sem:
+        mp3 = OUT / f"{name}.mp3"
+        communicate = edge_tts.Communicate(text, VOICE, rate=RATE)
+        await communicate.save(str(mp3))
+        print("wrote", mp3.name, "←", text)
 
 
 async def main() -> None:
@@ -56,8 +72,12 @@ async def main() -> None:
         print("请先安装: pip install edge-tts", file=sys.stderr)
         sys.exit(1)
     OUT.mkdir(parents=True, exist_ok=True)
-    await asyncio.gather(*(gen_one(k, v) for k, v in CLIPS.items()))
-    print("完成。前端将优先加载同名 .wav；若只有 mp3，请用 ffmpeg 转换，或改用浏览器 TTS 回退。")
+    clips = build_clips()
+    # 限流，避免 edge 并发过多失败
+    sem = asyncio.Semaphore(4)
+    await asyncio.gather(*(gen_one(k, v, sem) for k, v in clips.items()))
+    print(f"完成，共 {len(clips)} 个词片 → {OUT}")
+    print("前端优先加载整段 1..32.mp3；缺失时回退拼接或 TTS。")
 
 
 if __name__ == "__main__":

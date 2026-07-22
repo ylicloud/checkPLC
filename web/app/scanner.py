@@ -37,12 +37,17 @@ class IoScanner:
         self._running = False
         self._thread: Optional[threading.Thread] = None
         self._error: Optional[str] = None
+        self._ai_last_announce_ts: float = 0.0
+        # 每通道已播报/已测过的毫安整数值：回到原值 A 不再播报
+        self._ai_seen_ma: dict[int, set[int]] = {}
 
     def set_cabinet(self, cabinet: dict[str, Any]) -> None:
         with self._lock:
             self._cabinet = cabinet
             self._prev_di.clear()
             self._prev_ai.clear()
+            self._ai_last_announce_ts = 0.0
+            self._ai_seen_ma.clear()
 
     def get_cabinet(self) -> dict[str, Any]:
         with self._lock:
@@ -61,11 +66,13 @@ class IoScanner:
             self._running = False
 
     def pop_events(self, max_n: int = 20) -> list[AnnounceEvent]:
+        """取出播报事件；只保留最新一条，加快响应（新覆盖旧）。"""
         with self._lock:
-            out: list[AnnounceEvent] = []
-            while self._queue and len(out) < max_n:
-                out.append(self._queue.popleft())
-            return out
+            if not self._queue:
+                return []
+            latest = self._queue[-1]
+            self._queue.clear()
+            return [latest]
 
     def clear_events(self) -> int:
         """丢弃未播报事件（页面刷新 / 重新连接时避免连播旧队列）。"""
@@ -82,6 +89,20 @@ class IoScanner:
             self._active_ai = None
             self._prev_di.clear()
             self._prev_ai.clear()
+            self._ai_last_announce_ts = 0.0
+            self._ai_seen_ma.clear()
+
+    def _mark_ai_seen(self, global_ch: int, *ma_vals: float) -> None:
+        bucket = self._ai_seen_ma.setdefault(global_ch, set())
+        for v in ma_vals:
+            if v is None:
+                continue
+            bucket.add(int(round(float(v))))
+
+    def _push_event(self, ev: AnnounceEvent) -> None:
+        """新播报覆盖旧播报，不排队。"""
+        self._queue.clear()
+        self._queue.append(ev)
 
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
@@ -177,7 +198,8 @@ class IoScanner:
 
 
     def inject_di_rising(self, start_addr: int, bit: int) -> Optional[int]:
-        """Mock 专用：按过程映像地址注入一次 DI 上升沿播报（不依赖扫描时序）。"""
+        """Mock 专用：按过程映像地址注入一次 DI 上升沿播报（不依赖扫描时序）。
+        返回槽内通道号（1..N），不累加全局号。"""
         with self._lock:
             cabinet = self._cabinet
             if not cabinet:
@@ -197,15 +219,17 @@ class IoScanner:
                     global_ch = next((g for g, ss, c in gmap if ss == slot and c == ch), None)
                     if global_ch is None:
                         return None
+                    local_ch = ch + 1
                     self._prev_di[(slot, ch)] = True
                     self._di_states[global_ch] = True
-                    self._active_di = global_ch
+                    self._active_di = local_ch
                     # 不入队：由前端按钮播报一次，避免与 poll 事件重复
-                    return global_ch
+                    return local_ch
             return None
 
     def inject_ai_change(self, start_addr: int, raw: int) -> Optional[tuple[int, float]]:
-        """Mock 专用：按 AI 起始地址更新状态（播报由前端触发一次）。"""
+        """Mock 专用：按 AI 起始地址更新状态（播报由前端触发一次）。
+        返回 (槽内通道号, mA)。"""
         with self._lock:
             cabinet = self._cabinet
             if not cabinet:
@@ -228,14 +252,24 @@ class IoScanner:
                 if r >= 0x8000:
                     r -= 0x10000
                 ma = eng_min + (r / raw_full) * span if raw_full else eng_min
-                global_ch = next((g for g, ss, c in gmap if ss == slot and c == 0), None)
+                # Mock 按钮默认打通道 0（槽内第 1 路）
+                ch = 0
+                global_ch = next((g for g, ss, c in gmap if ss == slot and c == ch), None)
                 if global_ch is None:
                     return None
+                local_ch = ch + 1
+                prev = self._prev_ai.get(global_ch)
                 self._prev_ai[global_ch] = ma
                 self._ai_values[global_ch] = ma
-                self._active_ai = (global_ch, ma)
+                self._active_ai = (local_ch, ma)
+                self._ai_last_announce_ts = time.time()
+                # 与真机一致：记下原值与本次值，回落到原值不再播
+                if prev is not None:
+                    self._mark_ai_seen(global_ch, prev, ma)
+                else:
+                    self._mark_ai_seen(global_ch, ma)
                 # 不入队：由前端按钮播报一次
-                return (global_ch, ma)
+                return (local_ch, ma)
             return None
 
     def note_mock_di(self, start_addr: int, bit: int, value: bool) -> None:
@@ -309,11 +343,13 @@ class IoScanner:
         return masks
 
     def _scan_once(self, cabinet: dict[str, Any]) -> None:
-        thr = float(cabinet.get("ai_announce_threshold_ma", 0.5))
+        # AI：A→B（>10%）播 B；回到已测过的 A 不再播；1 秒内只播第一次
+        thr_pct = float(cabinet.get("ai_announce_threshold_pct", 10.0)) / 100.0
+        cooldown_s = float(cabinet.get("ai_announce_cooldown_ms", 1000)) / 1000.0
+        now = time.time()
         # 注意：此处不再回读 DQ_Force；以 set_dq_bit/reset 维护的本地位图为准
-        # DI
+        # DI：播报槽内通道 1..N，不累加全局号
         gmap = db_layout.global_channel_map(cabinet, "di")
-        # group by slot for efficient reads
         slots = {s["slot"]: s for s in cabinet.get("di", []) if s.get("enable")}
         for slot, conf in slots.items():
             start = int(conf["start_addr"])
@@ -326,19 +362,19 @@ class IoScanner:
                 val = bool(data[byte_i] & (1 << bit_i))
                 key = (slot, ch)
                 prev = self._prev_di.get(key)
-                # find global channel
                 global_ch = next((g for g, s, c in gmap if s == slot and c == ch), None)
                 if global_ch is None:
                     continue
+                local_ch = ch + 1
                 self._di_states[global_ch] = val
                 # 上升沿：False→True，以及首次 None→True（避免 Mock 短脉冲被跳过）
                 if val and prev is not True:
-                    self._active_di = global_ch
-                    self._queue.append(
+                    self._active_di = local_ch
+                    self._push_event(
                         AnnounceEvent(
                             kind="di",
-                            channel=global_ch,
-                            text=self._zh_number(global_ch),
+                            channel=local_ch,
+                            text=self._zh_number(local_ch),
                         )
                     )
                 self._prev_di[key] = val
@@ -354,6 +390,7 @@ class IoScanner:
             eng_min = float(conf.get("eng_min_ma", 4.0) or 4.0)
             if eng_max <= eng_min:
                 eng_min, eng_max = 4.0, 20.0
+            span = eng_max - eng_min
             data = bridge.read_area_i(start, n * 2)
             for ch in range(n):
                 hi, lo = data[ch * 2], data[ch * 2 + 1]
@@ -361,25 +398,34 @@ class IoScanner:
                 if raw >= 0x8000:
                     raw -= 0x10000
                 # 4~20mA 组态：0→eng_min，27648→eng_max
-                span = eng_max - eng_min
                 ma = eng_min + (raw / raw_full) * span if raw_full else eng_min
                 global_ch = next((g for g, s, c in gmap_ai if s == slot and c == ch), None)
                 if global_ch is None:
                     continue
+                local_ch = ch + 1
                 self._ai_values[global_ch] = ma
                 prev = self._prev_ai.get(global_ch)
-                if prev is None or abs(ma - prev) >= thr:
-                    if prev is not None or ma > eng_min + 0.2:
-                        self._active_ai = (global_ch, ma)
-                        ma_txt = self._zh_ma(ma)
-                        self._queue.append(
-                            AnnounceEvent(
-                                kind="ai",
-                                channel=global_ch,
-                                ma=ma,
-                                text=f"{self._zh_number(global_ch)}，{ma_txt}",
-                            )
+                ma_i = int(round(ma))
+                seen = self._ai_seen_ma.get(global_ch) or set()
+                # 首次只记基准原值 A，不播报；仅在 A→B 且变化够大时播 B
+                should = False
+                if prev is not None and ma_i not in seen:
+                    base = abs(prev) if abs(prev) > 1e-6 else max(span * 0.1, 1.0)
+                    should = abs(ma - prev) >= base * thr_pct
+                if should and (now - self._ai_last_announce_ts) >= cooldown_s:
+                    self._active_ai = (local_ch, ma)
+                    ma_txt = self._zh_ma(ma)
+                    self._push_event(
+                        AnnounceEvent(
+                            kind="ai",
+                            channel=local_ch,
+                            ma=ma,
+                            text=f"{self._zh_number(local_ch)}，{ma_txt}",
                         )
+                    )
+                    self._ai_last_announce_ts = now
+                    # 原值 A 与本次 B 都记入已测，回落 A 或再遇 B 不再播
+                    self._mark_ai_seen(global_ch, prev, ma)
                 self._prev_ai[global_ch] = ma
 
         # AQ monitor from runtime DB（块不存在时不阻断 DI/AI）
@@ -403,14 +449,21 @@ class IoScanner:
 
     @staticmethod
     def _zh_number(n: int) -> str:
+        """两位数简化：>20 不读「十」，如 21→二一，加快播报。"""
         digits = "零一二三四五六七八九"
+        n = int(n)
+        if n < 0:
+            n = 0
         if n <= 10:
             return ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][n]
         if n < 20:
             return "十" + (digits[n - 10] if n > 10 else "")
         if n < 100:
             tens, ones = divmod(n, 10)
-            return digits[tens] + "十" + (digits[ones] if ones else "")
+            if ones == 0:
+                return digits[tens] + "十"  # 20→二十
+            # >20：不读「十」→ 二一、三二等
+            return digits[tens] + digits[ones]
         return str(n)
 
     @staticmethod

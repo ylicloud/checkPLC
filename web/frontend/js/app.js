@@ -586,8 +586,10 @@ async function poll(opts = {}) {
         $("aiHero").textContent = String(ev.channel);
         $("aiText").textContent = ev.text;
       }
-      if (!silent) Voice.announce(ev);
     }
+    // 只播最新一条（后端已覆盖旧事件；前端再打断旧语音）
+    const evs = snap.events || [];
+    if (!silent && evs.length) Voice.announce(evs[evs.length - 1]);
     if (snap.error) $("connectMsg").textContent = "扫描: " + snap.error;
   } catch {
     /* 网络抖动不改连接角标 */
@@ -823,6 +825,20 @@ $("dqSlot").onchange = () => {
 (async function init() {
   document.querySelector('.slot-tools button[data-kind="di"]').classList.add("active");
   document.body.addEventListener("click", () => Voice.unlock(), { once: false, passive: true });
+  // 语音速度：1 / 1.5 / 2
+  const rateSel = $("voiceRate");
+  if (rateSel) {
+    let saved = "1";
+    try {
+      saved = localStorage.getItem("checkplc_voice_rate") || "1";
+    } catch {
+      /* ignore */
+    }
+    if (!["1", "1.5", "2"].includes(saved)) saved = "1";
+    rateSel.value = saved;
+    Voice.setRate(saved);
+    rateSel.onchange = () => Voice.setRate(rateSel.value);
+  }
   Voice.reset();
   await Voice.preload();
   // 丢弃服务端残留播报队列，避免刷新后连播

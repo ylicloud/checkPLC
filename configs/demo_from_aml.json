@@ -696,7 +696,8 @@
       "eng_full_ma": 20
     }
   ],
-  "ai_announce_threshold_ma": 0.5,
+  "ai_announce_threshold_pct": 10,
+  "ai_announce_cooldown_ms": 1000,
   "_import": {
     "source": "tia_cax_aml",
     "modules_found": [
