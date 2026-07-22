@@ -13,3 +13,10 @@ web/frontend/assets/voice/*.wav
 **/Logs/
 **/IM/SearchIndex/
 scripts/_tmp_*.py
+
+# TIA Openness export build
+tools/tia-openness-export/bin/
+tools/tia-openness-export/obj/
+*.aml
+!tools/tia-openness-export/samples/*.aml
+

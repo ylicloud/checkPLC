@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>CheckPlc.TiaExport</RootNamespace>
+    <AssemblyName>CheckPlc.TiaExport</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <!-- 按本机 TIA V20 安装路径修改；也可用环境变量 TIA_PUBLICAPI -->
+    <TiaPublicApi Condition="'$(TiaPublicApi)' == ''">$(TIA_PUBLICAPI)</TiaPublicApi>
+    <TiaPublicApi Condition="'$(TiaPublicApi)' == ''">C:\Program Files\Siemens\Automation\Portal V20\PublicAPI\V20</TiaPublicApi>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Siemens.Engineering">
+      <HintPath>$(TiaPublicApi)\Siemens.Engineering.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Siemens.Engineering.Hmi" Condition="Exists('$(TiaPublicApi)\Siemens.Engineering.Hmi.dll')">
+      <HintPath>$(TiaPublicApi)\Siemens.Engineering.Hmi.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

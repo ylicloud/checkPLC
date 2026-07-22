@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Minimal synthetic AML for testing scripts/aml_to_cabinet.py (not a real CAx export). -->
+<CAEXFile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <InstanceHierarchy Name="Demo">
+    <InternalElement Name="S7-1200 station">
+      <InternalElement Name="Rail_0">
+        <InternalElement Name="CPU_1214C">
+          <Attribute Name="IpAddress"><Value>192.168.100.10</Value></Attribute>
+          <InternalElement Name="DI14_DQ10_1">
+            <Attribute Name="Address">
+              <Attribute Name="IoType"><Value>Input</Value></Attribute>
+              <Attribute Name="StartAddress"><Value>0</Value></Attribute>
+              <Attribute Name="Length"><Value>14</Value></Attribute>
+            </Attribute>
+            <Attribute Name="Address">
+              <Attribute Name="IoType"><Value>Output</Value></Attribute>
+              <Attribute Name="StartAddress"><Value>0</Value></Attribute>
+              <Attribute Name="Length"><Value>10</Value></Attribute>
+            </Attribute>
+            <Attribute Name="Channel">
+              <Attribute Name="Type"><Value>Digital</Value></Attribute>
+              <Attribute Name="IoType"><Value>Input</Value></Attribute>
+              <Attribute Name="Number"><Value>0</Value></Attribute>
+            </Attribute>
+            <Attribute Name="Channel">
+              <Attribute Name="Type"><Value>Digital</Value></Attribute>
+              <Attribute Name="IoType"><Value>Output</Value></Attribute>
+              <Attribute Name="Number"><Value>0</Value></Attribute>
+            </Attribute>
+          </InternalElement>
+          <InternalElement Name="AI8_1">
+            <Attribute Name="Address">
+              <Attribute Name="IoType"><Value>Input</Value></Attribute>
+              <Attribute Name="StartAddress"><Value>64</Value></Attribute>
+              <Attribute Name="Length"><Value>128</Value></Attribute>
+            </Attribute>
+            <Attribute Name="Channel">
+              <Attribute Name="Type"><Value>Analog</Value></Attribute>
+              <Attribute Name="IoType"><Value>Input</Value></Attribute>
+              <Attribute Name="Number"><Value>0</Value></Attribute>
+            </Attribute>
+            <Attribute Name="Channel">
+              <Attribute Name="Type"><Value>Analog</Value></Attribute>
+              <Attribute Name="IoType"><Value>Input</Value></Attribute>
+              <Attribute Name="Number"><Value>7</Value></Attribute>
+            </Attribute>
+          </InternalElement>
+          <InternalElement Name="AQ4_1">
+            <Attribute Name="Address">
+              <Attribute Name="IoType"><Value>Output</Value></Attribute>
+              <Attribute Name="StartAddress"><Value>80</Value></Attribute>
+              <Attribute Name="Length"><Value>64</Value></Attribute>
+            </Attribute>
+            <Attribute Name="Channel">
+              <Attribute Name="Type"><Value>Analog</Value></Attribute>
+              <Attribute Name="IoType"><Value>Output</Value></Attribute>
+              <Attribute Name="Number"><Value>0</Value></Attribute>
+            </Attribute>
+            <Attribute Name="Channel">
+              <Attribute Name="Type"><Value>Analog</Value></Attribute>
+              <Attribute Name="IoType"><Value>Output</Value></Attribute>
+              <Attribute Name="Number"><Value>3</Value></Attribute>
+            </Attribute>
+          </InternalElement>
+        </InternalElement>
+      </InternalElement>
+    </InternalElement>
+  </InstanceHierarchy>
+</CAEXFile>

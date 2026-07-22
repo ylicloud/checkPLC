@@ -86,6 +86,82 @@ cd D:\repos\checkPLC
 
 下次检测同类型柜子：下拉加载已有配置，通常只需修改 PLC IP 即可开始通检。可与 TIA 工程归档一一对应管理。
 
+### 从 TIA Openness 自动生成柜配置（可选）
+
+工程机安装 TIA V20 后，可用 Openness 导出硬件 AML，再转成 Web 配置，免手工抄地址。完整说明见 [docs/tia-openness-export.md](docs/tia-openness-export.md)。
+
+```bat
+cd tools\tia-openness-export
+export.bat --out D:\Temp\柜A.aml
+
+cd ..\..
+python scripts\aml_to_cabinet.py D:\Temp\柜A.aml -o configs\柜A.json --name 柜A --ip 192.168.0.1
+```
+
+## 工具使用
+
+### 日常运行（质检笔记本）
+
+| 工具 | 命令 / 操作 | 说明 |
+|------|-------------|------|
+| 安装环境 | 双击 `setup.bat` 或 `.\scripts\setup.ps1` | 创建 `.venv`、安装依赖 |
+| 启动 Web | 双击 `run.bat` 或 `.\scripts\run.ps1` | 打开 http://127.0.0.1:8000 |
+| 生成语音词片 | `python scripts/generate_wavs.py` | 需先 `pip install edge-tts`；降低 DI/AI 播报延迟 |
+
+### 从 Portal 导出柜配置（工程机，需 TIA V20）
+
+免去在 Web 页面手工填写模块起始地址。
+
+**前置：**
+
+1. 安装 TIA Portal V20（含 Openness）
+2. Windows 用户加入组 **Siemens TIA Openness**
+3. 安装 .NET SDK（用于编译导出工具）
+4. 确认 DLL 存在（路径不同时设置环境变量 `TIA_PUBLICAPI`）：
+
+```
+C:\Program Files\Siemens\Automation\Portal V20\PublicAPI\V20\Siemens.Engineering.dll
+```
+
+**步骤：**
+
+```bat
+REM 1) 建议先在 Portal 中打开目标工程（PLC 离线）
+cd tools\tia-openness-export
+
+REM 2) 编译并导出 AML（首次会 dotnet build）
+export.bat --out D:\Temp\柜A.aml
+
+REM 也可指定工程文件 / 只导出某一站：
+REM export.bat --project "D:\path\质检查线.ap20" --out D:\Temp\柜A.aml --new
+REM export.bat --device "S7-1200 station" --out D:\Temp\柜A.aml
+
+REM 3) 转为 Web 可用的 configs JSON（在仓库根目录）
+cd ..\..
+python scripts\aml_to_cabinet.py D:\Temp\柜A.aml -o configs\柜A.json --name 柜A --ip 192.168.0.1
+```
+
+**无 Portal 时验证转换脚本**（使用仓库内示例 AML）：
+
+```bat
+python scripts\aml_to_cabinet.py tools\tia-openness-export\samples\demo_cabinet.aml -o configs\demo_from_aml.json --name demo_from_aml
+```
+
+然后在 Web **配置**页加载对应配置名即可。
+
+| 工具 | 路径 | 作用 |
+|------|------|------|
+| CAx 导出 | `tools/tia-openness-export/` | Openness 导出硬件 → `.aml` |
+| AML 转换 | `scripts/aml_to_cabinet.py` | `.aml` → `configs/*.json` |
+| 说明文档 | `docs/tia-openness-export.md` | 映射规则与注意事项 |
+
+### 其它脚本
+
+| 脚本 | 作用 |
+|------|------|
+| `scripts/build_workspace_xml.py` | 重新生成 `workspace/` 下 UDT/DB/Main 的 Openness XML |
+| `scripts/generate_wavs.py` | 生成中文语音词片到 `web/frontend/assets/voice/` |
+
 ## 快速开始（Mock 模式，无需 PLC）
 
 ```bash
@@ -156,10 +232,11 @@ checkPLC/
 ├── setup.bat             # 一键安装环境（Windows）
 ├── run.bat               # 一键启动服务
 ├── configs/              # 每柜 JSON 配置
-├── docs/                 # 需求、设计、TIA 导入说明
+├── docs/                 # 需求、设计、TIA 导入 / Openness 导出说明
 │   ├── requirement.md
 │   ├── design.md
-│   └── tia-import.md
+│   ├── tia-import.md
+│   └── tia-openness-export.md
 ├── plc/                  # PLC 源程序（UDT / DB / SCL）
 │   ├── udt/
 │   ├── db/
@@ -168,7 +245,13 @@ checkPLC/
 ├── web/
 │   ├── app/              # FastAPI 后端
 │   └── frontend/         # 浏览器前端
-├── scripts/              # 语音词片生成、workspace XML 构建
+├── tools/
+│   └── tia-openness-export/  # TIA V20 CAx 导出 AML（export.bat）
+├── scripts/
+│   ├── setup.ps1 / run.ps1   # 环境安装与启动
+│   ├── aml_to_cabinet.py     # AML → 柜配置 JSON
+│   ├── generate_wavs.py      # 语音词片
+│   └── build_workspace_xml.py
 └── requirements.txt
 ```
 
@@ -178,15 +261,18 @@ checkPLC/
 |------|------|
 | [docs/design.md](docs/design.md) | 架构设计与数据块布局 |
 | [docs/tia-import.md](docs/tia-import.md) | TIA Portal 导入与通信设置 |
+| [docs/tia-openness-export.md](docs/tia-openness-export.md) | Openness 导出硬件 → 柜配置 JSON |
 | [plc/README.md](plc/README.md) | PLC 程序说明与字节偏移表 |
 | [workspace/README_IMPORT.md](workspace/README_IMPORT.md) | VCI 工作区导入顺序 |
 
 ## 通检流程
 
 ```
-TIA 组态硬件 → 导入通检程序 → 允许 PUT/GET → 下载
+TIA 组态硬件 →（可选）Openness 导出 AML → aml_to_cabinet 生成 JSON
        ↓
-启动 Web → 填写 IP 与模块配置 → 保存并下发
+导入通检程序 → 允许 PUT/GET → 下载
+       ↓
+启动 Web → 加载柜配置 → 保存并下发
        ↓
 通检 DI/AI（听语音）→ 通检 DQ（点按钮测端子）→ 通检 AQ（测阶梯电流）
        ↓
