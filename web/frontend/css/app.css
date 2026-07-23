@@ -175,6 +175,106 @@ th { color: var(--muted); font-weight: 600; }
 .mock-box .mock-hint { margin: 0.5rem 0 0; font-size: 0.85rem; }
 .mock-box .mock-hint.warn { color: var(--warn); }
 .mock-box .mock-hint.ok { color: var(--ok); }
+
+.btn-help {
+  flex-shrink: 0;
+  border-color: var(--accent);
+  color: #cfe6ff;
+}
+.modal[hidden] { display: none !important; }
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+.modal-panel {
+  position: relative;
+  width: min(720px, 100%);
+  max-height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.modal-head h2 { margin: 0; font-size: 1.1rem; }
+.modal-close {
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: 0.2rem 0.55rem;
+}
+.modal-body {
+  padding: 0.75rem 1rem 1.25rem;
+  overflow: auto;
+}
+.help-tabs {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+.help-tabs button.active {
+  border-color: var(--accent);
+  background: #243447;
+  color: #fff;
+}
+.help-pane { display: none; }
+.help-pane.active { display: block; }
+.help-pane h3 {
+  margin: 1rem 0 0.45rem;
+  font-size: 0.95rem;
+  color: #c5d4e4;
+}
+.help-pane h3:first-child { margin-top: 0; }
+.help-pane ol, .help-pane ul { margin: 0.35rem 0 0; padding-left: 1.25rem; }
+.help-pane li { margin: 0.35rem 0; line-height: 1.45; }
+.help-pane pre {
+  margin: 0.4rem 0;
+  padding: 0.75rem 0.85rem;
+  background: #0f1419;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: auto;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #d7e4f2;
+}
+.help-pane code {
+  font-size: 0.85em;
+  background: #0f1419;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.help-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.help-table th, .help-table td {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
+.help-table th { color: var(--muted); background: #141b24; width: 32%; }
+
 @media (max-width: 800px) {
   .slot-card, .slot-card.ana { grid-template-columns: 1fr 1fr; }
 }

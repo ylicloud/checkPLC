@@ -232,7 +232,8 @@ checkPLC/
 ├── setup.bat             # 一键安装环境（Windows）
 ├── run.bat               # 一键启动服务
 ├── configs/              # 每柜 JSON 配置
-├── docs/                 # 需求、设计、TIA 导入 / Openness 导出说明
+├── docs/                 # 需求、设计、更新说明、TIA 导入 / Openness 导出
+│   ├── 更新说明.md       # 最近更新 / 升级记录
 │   ├── requirement.md
 │   ├── design.md
 │   ├── tia-import.md
@@ -259,6 +260,7 @@ checkPLC/
 
 | 文档 | 内容 |
 |------|------|
+| [docs/更新说明.md](docs/更新说明.md) | **最近更新** / 版本升级记录 |
 | [docs/design.md](docs/design.md) | 架构设计与数据块布局 |
 | [docs/tia-import.md](docs/tia-import.md) | TIA Portal 导入与通信设置 |
 | [docs/tia-openness-export.md](docs/tia-openness-export.md) | Openness 导出硬件 → 柜配置 JSON |

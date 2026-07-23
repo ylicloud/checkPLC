@@ -1,11 +1,12 @@
-"""Generate Chinese voice clips for low-latency playback.
+"""Generate whole-number voice clips (1 file = 1 announce).
 
 Requires: pip install edge-tts
 Usage:  python scripts/generate_wavs.py
 Output: web/frontend/assets/voice/*.mp3
 
-优先生成 1~32 整段数字（与播报简化读音一致，如 21→二一），
-前端直接播一整段，比「十+一」拼接或浏览器 TTS 更快。
+每个通道号一个整段 mp3，前端直接播放。
+>20 的简化读音（三二）用「大写数字」整段合成（叁贰），
+避免引擎念成「三十二」，也避免「三」+「二」两段拼接变慢。
 """
 
 from __future__ import annotations
@@ -17,52 +18,39 @@ from pathlib import Path
 OUT = Path(__file__).resolve().parents[1] / "web" / "frontend" / "assets" / "voice"
 
 VOICE = "zh-CN-XiaoxiaoNeural"
-# 略提速：edge-tts rate；前端还可再设 playbackRate
-RATE = "+20%"
+RATE = "+25%"
+
+# 大写数字：TTS 通常按字读，不会把「叁贰」展开成「三十二」
+CAPS = "零壹贰叁肆伍陆柒捌玖"
+DIGITS = "零一二三四五六七八九"
 
 
-def zh_number(n: int) -> str:
-    """与 scanner / voice.js 一致：>20 不读「十」（21→二一）。"""
-    digits = "零一二三四五六七八九"
+def speak_text(n: int) -> str:
+    """整段合成用的文本（听感连续、速度接近「三十」）。"""
     if n <= 10:
         return ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"][n]
     if n < 20:
-        return "十" + (digits[n - 10] if n > 10 else "")
+        return "十" + DIGITS[n - 10]
     if n < 100:
         tens, ones = divmod(n, 10)
         if ones == 0:
-            return digits[tens] + "十"
-        return digits[tens] + digits[ones]
+            return DIGITS[tens] + "十"  # 二十、三十
+        # 简化两位：用大写整段「叁贰」，一次合成、不停顿
+        return CAPS[tens] + CAPS[ones]
     return str(n)
 
 
-def build_clips() -> dict[str, str]:
-    clips: dict[str, str] = {
-        "tongdao": "通道",
-        "haoan": "毫安",
-        "dian": "点",
-        "shi": "十",
-    }
-    # 个位词片（AI 毫安拼接兜底）
-    for i in range(0, 11):
-        clips[str(i)] = zh_number(i)
-    # 1~32 整段：通道号直播
-    for i in range(1, 33):
-        clips[str(i)] = zh_number(i)
-    # 常用毫安整段（4~20），AI 可「通道+毫安」两段拼完
-    for i in range(4, 21):
-        clips[f"ma{i}"] = f"{zh_number(i)}毫安"
-    return clips
+def concat_mp3(parts: list[Path], dest: Path) -> None:
+    dest.write_bytes(b"".join(p.read_bytes() for p in parts))
 
 
 async def gen_one(name: str, text: str, sem: asyncio.Semaphore) -> None:
     import edge_tts
 
+    path = OUT / f"{name}.mp3"
     async with sem:
-        mp3 = OUT / f"{name}.mp3"
-        communicate = edge_tts.Communicate(text, VOICE, rate=RATE)
-        await communicate.save(str(mp3))
-        print("wrote", mp3.name, "←", text)
+        await edge_tts.Communicate(text, VOICE, rate=RATE).save(str(path))
+        print("wrote", path.name, "←", text)
 
 
 async def main() -> None:
@@ -71,13 +59,30 @@ async def main() -> None:
     except ImportError:
         print("请先安装: pip install edge-tts", file=sys.stderr)
         sys.exit(1)
+
     OUT.mkdir(parents=True, exist_ok=True)
-    clips = build_clips()
-    # 限流，避免 edge 并发过多失败
     sem = asyncio.Semaphore(4)
-    await asyncio.gather(*(gen_one(k, v, sem) for k, v in clips.items()))
-    print(f"完成，共 {len(clips)} 个词片 → {OUT}")
-    print("前端优先加载整段 1..32.mp3；缺失时回退拼接或 TTS。")
+
+    extras = {
+        "haoan": "毫安",
+        "shi": "十",
+        "dian": "点",
+        "tongdao": "通道",
+        "0": "零",
+    }
+    # 1~32：全部整段一次合成（含简化的 21~32）
+    tasks = [gen_one(str(n), speak_text(n), sem) for n in range(1, 33)]
+    tasks += [gen_one(k, v, sem) for k, v in extras.items()]
+    await asyncio.gather(*tasks)
+
+    # ma4~ma20 = 数字整段 + 毫安（仅此处离线拼接文件，前端仍播一个 maN）
+    haoan = OUT / "haoan.mp3"
+    for n in range(4, 21):
+        concat_mp3([OUT / f"{n}.mp3", haoan], OUT / f"ma{n}.mp3")
+        print("wrote", f"ma{n}.mp3", "←", f"{n}+haoan")
+
+    print(f"完成 → {OUT}")
+    print("示例: 30←三十, 32←叁贰(读作三二, 单段连续)")
 
 
 if __name__ == "__main__":

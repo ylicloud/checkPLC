@@ -474,5 +474,17 @@ class IoScanner:
             n = 0
         return f"{IoScanner._zh_number(n)}毫安"
 
+    @staticmethod
+    def _zh_number_tts(n: int) -> str:
+        """TTS 文案：>20 用顿号，避免念成「三十一」。"""
+        digits = "零一二三四五六七八九"
+        n = int(n)
+        if n <= 20 or (n < 100 and n % 10 == 0):
+            return IoScanner._zh_number(n)
+        if n < 100:
+            tens, ones = divmod(n, 10)
+            return f"{digits[tens]}、{digits[ones]}"
+        return str(n)
+
 
 scanner = IoScanner()

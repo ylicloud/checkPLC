@@ -822,10 +822,42 @@ $("dqSlot").onchange = () => {
   buildDqGrid(lastDqForce);
 };
 
+(function setupHelpModal() {
+  const modal = $("helpModal");
+  const openBtn = $("btnHelp");
+  if (!modal || !openBtn) return;
+
+  function openHelp() {
+    modal.hidden = false;
+  }
+  function closeHelp() {
+    modal.hidden = true;
+  }
+  openBtn.onclick = openHelp;
+  modal.querySelectorAll("[data-close-help]").forEach((el) => {
+    el.addEventListener("click", closeHelp);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.hidden) closeHelp();
+  });
+
+  const tabs = $("helpTabs");
+  if (!tabs) return;
+  tabs.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-help]");
+    if (!btn) return;
+    const id = btn.dataset.help;
+    tabs.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b === btn));
+    modal.querySelectorAll("[data-help-pane]").forEach((pane) => {
+      pane.classList.toggle("active", pane.dataset.helpPane === id);
+    });
+  });
+})();
+
 (async function init() {
   document.querySelector('.slot-tools button[data-kind="di"]').classList.add("active");
   document.body.addEventListener("click", () => Voice.unlock(), { once: false, passive: true });
-  // 语音速度：1 / 1.5 / 2
+  // 语音速度：1 / 1.2 / 1.5 / 1.8 / 2
   const rateSel = $("voiceRate");
   if (rateSel) {
     let saved = "1";
@@ -834,7 +866,7 @@ $("dqSlot").onchange = () => {
     } catch {
       /* ignore */
     }
-    if (!["1", "1.5", "2"].includes(saved)) saved = "1";
+    if (!["1", "1.2", "1.5", "1.8", "2"].includes(saved)) saved = "1";
     rateSel.value = saved;
     Voice.setRate(saved);
     rateSel.onchange = () => Voice.setRate(rateSel.value);
