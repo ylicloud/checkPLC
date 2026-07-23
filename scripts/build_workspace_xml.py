@@ -221,7 +221,7 @@ FOR slot := 1 TO 20 DO
       IF globalCh > 160 THEN
         EXIT;
       END_IF;
-      mA := INT_TO_REAL(3 + globalCh);
+      mA := INT_TO_REAL(4 + ((globalCh - 1) MOD 8)); // 4~11 mA 循环
       "DB_IO_Runtime".AQ_mA[globalCh] := mA;
       raw := REAL_TO_INT((mA - engMin) / (engMax - engMin) * INT_TO_REAL(rawFull));
       IF raw > rawFull THEN

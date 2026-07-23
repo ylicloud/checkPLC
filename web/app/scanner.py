@@ -97,7 +97,17 @@ class IoScanner:
         for v in ma_vals:
             if v is None:
                 continue
-            bucket.add(int(round(float(v))))
+            bucket.add(self._ma_announce_key(v))
+
+    @staticmethod
+    def _ma_announce_key(ma: float) -> int:
+        """播报去重键：0..24 用整毫安；>24 统一为 25（超出）。"""
+        n = int(round(float(ma)))
+        if n < 0:
+            return 0
+        if n > 24:
+            return 25
+        return n
 
     def _push_event(self, ev: AnnounceEvent) -> None:
         """新播报覆盖旧播报，不排队。"""
@@ -405,7 +415,7 @@ class IoScanner:
                 local_ch = ch + 1
                 self._ai_values[global_ch] = ma
                 prev = self._prev_ai.get(global_ch)
-                ma_i = int(round(ma))
+                ma_i = self._ma_announce_key(ma)
                 seen = self._ai_seen_ma.get(global_ch) or set()
                 # 首次只记基准原值 A，不播报；仅在 A→B 且变化够大时播 B
                 should = False
@@ -441,7 +451,7 @@ class IoScanner:
                 continue
             for _ in range(int(s["channel_count"])):
                 g += 1
-                expected.append(float(3 + g))
+                expected.append(float(4 + ((g - 1) % 8)))  # 4~11 循环
         if not vals or all(abs(v) < 1e-6 for v in vals[: len(expected)]):
             self._aq_values = expected
         else:
@@ -468,10 +478,11 @@ class IoScanner:
 
     @staticmethod
     def _zh_ma(ma: float) -> str:
-        # 去掉小数：4.2 → 四毫安
         n = int(round(ma))
         if n < 0:
             n = 0
+        if n > 24:
+            return "超出二十四毫安"
         return f"{IoScanner._zh_number(n)}毫安"
 
     @staticmethod

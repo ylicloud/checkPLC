@@ -2,7 +2,7 @@
  * 整段 MP3 播报：1 个通道号 = 1 个文件。
  * 使用 HTMLAudioElement（与资源管理器/浏览器直接打开 mp3 同一路径），
  * 避免 AudioContext 在 setInterval 轮询触发时仍 suspended 导致无声。
- * 词片：/assets/voice/1..32、ma4..ma20（scripts/generate_wavs.py）
+ * 词片：/assets/voice/1..32、ma0..ma24、ma_over24（scripts/generate_wavs.py）
  */
 const Voice = (() => {
   const base = "/assets/voice/";
@@ -18,9 +18,9 @@ const Voice = (() => {
   let unlocked = false;
 
   function preloadKeys() {
-    const keys = [];
+    const keys = ["ma_over24"];
     for (let i = 1; i <= 32; i++) keys.push(String(i));
-    for (let i = 4; i <= 20; i++) keys.push(`ma${i}`);
+    for (let i = 0; i <= 24; i++) keys.push(`ma${i}`);
     return keys;
   }
 
@@ -137,11 +137,16 @@ const Voice = (() => {
   }
 
   async function speakWavAi(channel, ma, gen) {
-    const n = Math.max(0, Math.round(ma));
     const okCh = await speakWhole(channel, gen);
     if (!okCh || gen !== playGen) return okCh;
-    if (!ready || available.has(`ma${n}`)) {
-      await speakWhole(`ma${n}`, gen);
+    const n = Math.round(Number(ma) || 0);
+    if (n > 24) {
+      await speakWhole("ma_over24", gen);
+    } else {
+      const key = `ma${Math.max(0, n)}`;
+      if (!ready || available.has(key)) {
+        await speakWhole(key, gen);
+      }
     }
     return true;
   }

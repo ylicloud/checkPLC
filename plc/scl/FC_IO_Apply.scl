@@ -1,5 +1,5 @@
 (* FC_IO_Apply
-   DQ 强制 → Q；AQ 阶梯电流 → QW（4~20mA）
+   DQ 强制 → Q；AQ 阶梯电流 → QW（4~11mA 循环）
    S7-1200：PEEK/POKE 字节；不用 ROUND/LINT（1200 不支持 LINT）
 *)
 FUNCTION "FC_IO_Apply" : Void
@@ -86,7 +86,7 @@ BEGIN
         IF globalCh > 160 THEN
           EXIT;
         END_IF;
-        mA := INT_TO_REAL(3 + globalCh);
+        mA := INT_TO_REAL(4 + ((globalCh - 1) MOD 8)); // 4~11 mA 循环
         "DB_IO_Runtime".AQ_mA[globalCh] := mA;
         tmpReal := (mA - engMin) / span * INT_TO_REAL(rawFull);
         // 不用 ROUND（会引入 LINT）；正数截断即可

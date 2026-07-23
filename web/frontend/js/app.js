@@ -470,14 +470,28 @@ function buildDqGrid(forceBits) {
 function renderDiChips(states) {
   lastDiStates = states || {};
   const host = $("diChips");
-  const entries = Object.entries(lastDiStates).sort((a, b) => Number(a[0]) - Number(b[0]));
-  if (!entries.length) {
+  if (!cabinet) {
     host.innerHTML = "";
-  } else {
-    host.innerHTML = entries
-      .map(([ch, on]) => `<span class="${on ? "on" : ""}" title="全局通道 ${ch}">${ch}</span>`)
-      .join("");
+    renderDiAddrTable(lastDiStates);
+    return;
   }
+  const chips = [];
+  let g = 0;
+  for (const s of [...(cabinet.di || [])].sort((a, b) => a.slot - b.slot)) {
+    if (!s.enable) continue;
+    const n = Number(s.channel_count) || 0;
+    const modName = s.name || `槽${s.slot}`;
+    for (let i = 0; i < n; i++) {
+      g += 1;
+      const on = !!(lastDiStates && lastDiStates[g]);
+      if (!on) continue;
+      const local = i + 1;
+      chips.push(
+        `<span class="on" title="${modName} · 通道 ${local}">${local}</span>`
+      );
+    }
+  }
+  host.innerHTML = chips.join("");
   renderDiAddrTable(lastDiStates);
 }
 
@@ -489,12 +503,15 @@ function renderDiAddrTable(states) {
   for (const s of [...(cabinet.di || [])].sort((a, b) => a.slot - b.slot)) {
     if (!s.enable) continue;
     const n = Number(s.channel_count) || 0;
+    const modName = s.name || "—";
     for (let i = 0; i < n; i++) {
       g += 1;
       const addr = digAddr("%I", s.start_addr, i);
       const on = !!(states && states[g]);
       rows.push(`<tr>
-        <td>${g}</td><td>${s.slot}</td><td>${i + 1}</td>
+        <td>${i + 1}</td>
+        <td>${modName}</td>
+        <td>${s.slot}</td>
         <td><code>${addr}</code></td>
         <td style="color:${on ? "var(--ok)" : "var(--muted)"}">${on ? "ON" : "OFF"}</td>
       </tr>`);
@@ -515,14 +532,19 @@ function renderAiTable(values) {
   for (const s of [...(cabinet.ai || [])].sort((a, b) => a.slot - b.slot)) {
     if (!s.enable) continue;
     const n = Number(s.channel_count) || 0;
+    const modName = s.name || "—";
     for (let i = 0; i < n; i++) {
       g += 1;
       const addr = anaAddr("%IW", s.start_addr, i);
       const ma = lastAiValues[String(g)];
-      rows.push(`<tr><td>${g}</td><td><code>${addr}</code></td><td>${ma == null ? "—" : Number(ma).toFixed(2)}</td></tr>`);
+      rows.push(
+        `<tr><td>${i + 1}</td><td>${modName}</td><td><code>${addr}</code></td><td>${
+          ma == null ? "—" : Number(ma).toFixed(2)
+        }</td></tr>`
+      );
     }
   }
-  tb.innerHTML = rows.join("") || `<tr><td colspan="3">无启用 AI</td></tr>`;
+  tb.innerHTML = rows.join("") || `<tr><td colspan="4">无启用 AI</td></tr>`;
 }
 
 function renderAqTable(values) {
@@ -537,14 +559,19 @@ function renderAqTable(values) {
   for (const s of [...(cabinet.aq || [])].sort((a, b) => a.slot - b.slot)) {
     if (!s.enable) continue;
     const n = Number(s.channel_count) || 0;
+    const modName = s.name || "—";
     for (let i = 0; i < n; i++) {
       g += 1;
       const addr = anaAddr("%QW", s.start_addr, i);
       const ma = lastAqValues[g - 1];
-      rows.push(`<tr><td>${g}</td><td><code>${addr}</code></td><td>${ma == null ? "—" : Number(ma).toFixed(2)}</td></tr>`);
+      rows.push(
+        `<tr><td>${i + 1}</td><td>${modName}</td><td><code>${addr}</code></td><td>${
+          ma == null ? "—" : Number(ma).toFixed(2)
+        }</td></tr>`
+      );
     }
   }
-  tb.innerHTML = rows.join("") || `<tr><td colspan="3">无启用 AQ</td></tr>`;
+  tb.innerHTML = rows.join("") || `<tr><td colspan="4">无启用 AQ</td></tr>`;
 }
 
 

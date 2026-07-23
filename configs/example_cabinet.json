@@ -155,7 +155,7 @@
       "slot": 1,
       "enable": true,
       "start_addr": 0,
-      "channel_count": 10,
+      "channel_count": 32,
       "name": "DQ110_local"
     },
     {
@@ -696,6 +696,5 @@
       "eng_min_ma": 4
     }
   ],
-  "ai_announce_threshold_pct": 10,
-  "ai_announce_cooldown_ms": 1000
+  "ai_announce_threshold_ma": 0.5
 }

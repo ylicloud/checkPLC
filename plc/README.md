@@ -62,7 +62,7 @@
 
 ## AQ 公式
 
-全局通道号 `n`（从 1 起）：`mA = 3 + n`。  
+全局通道号 `n`（从 1 起）：`mA = 4 + ((n-1) MOD 8)`，即 **4～11 mA 循环**。  
 **4～20 mA 组态**：`Raw = (mA − EngMin) / (EngMax − EngMin) × RawFull`  
 （4 mA→0，20 mA→27648）。
 

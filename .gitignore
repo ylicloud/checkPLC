@@ -5,9 +5,6 @@ __pycache__/
 .idea/
 .vscode/
 *.log
-web/frontend/assets/voice/*.mp3
-web/frontend/assets/voice/*.wav
-!web/frontend/assets/voice/README.md
 
 # TIA Portal 运行产物（源码以 plc/、workspace/ 为准）
 **/Logs/
