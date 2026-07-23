@@ -1,17 +1,21 @@
 /**
- * 预加载整段 WAV/MP3：1 个通道号 = 1 个文件，直接播放，不动态拼文字。
- * 词片：/assets/voice/1..32、ma4..ma20（由 scripts/generate_wavs.py 离线生成）
+ * 整段 MP3 播报：1 个通道号 = 1 个文件。
+ * 使用 HTMLAudioElement（与资源管理器/浏览器直接打开 mp3 同一路径），
+ * 避免 AudioContext 在 setInterval 轮询触发时仍 suspended 导致无声。
+ * 词片：/assets/voice/1..32、ma4..ma20（scripts/generate_wavs.py）
  */
 const Voice = (() => {
   const base = "/assets/voice/";
-  const cache = new Map();
+  /** @type {Set<string>} */
+  const available = new Set();
   let ready = false;
   let lastKey = "";
   let lastAt = 0;
   let rate = 1.0;
   let playGen = 0;
-  /** @type {AudioBufferSourceNode[]} */
-  let currentSources = [];
+  /** @type {HTMLAudioElement | null} */
+  let current = null;
+  let unlocked = false;
 
   function preloadKeys() {
     const keys = [];
@@ -24,12 +28,11 @@ const Voice = (() => {
     for (const ext of ["wav", "mp3"]) {
       const url = `${base}${k}.${ext}`;
       try {
-        const res = await fetch(url, { cache: "force-cache" });
+        const res = await fetch(url, { cache: "no-cache" });
         if (!res.ok) continue;
-        const buf = await res.arrayBuffer();
-        const ctx = audioCtx();
-        const decoded = await ctx.decodeAudioData(buf.slice(0));
-        cache.set(k, decoded);
+        // 只需确认存在；丢弃 body，真正播放走 <audio src>
+        await res.arrayBuffer();
+        available.add(String(k));
         return true;
       } catch {
         /* try next ext */
@@ -44,20 +47,29 @@ const Voice = (() => {
     for (let i = 0; i < keys.length; i += batch) {
       await Promise.all(keys.slice(i, i + batch).map(loadOne));
     }
-    ready = cache.size > 0;
+    ready = available.size > 0;
+    if (!ready) {
+      console.warn("[Voice] 词片未加载，请运行: python scripts/generate_wavs.py ，然后强制刷新页面");
+    } else {
+      console.info("[Voice] 已加载词片", available.size, "/", keys.length);
+    }
     return ready;
   }
 
-  let _ctx;
-  function audioCtx() {
-    if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
-    return _ctx;
+  function clipUrl(key) {
+    return `${base}${key}.mp3`;
   }
 
   async function unlock() {
+    unlocked = true;
+    // 部分浏览器需在用户手势内 play 一次；播极短静音唤醒策略
     try {
-      const ctx = audioCtx();
-      if (ctx.state === "suspended") await ctx.resume();
+      if (!current) {
+        const a = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=");
+        a.volume = 0.01;
+        await a.play().catch(() => {});
+        a.pause();
+      }
     } catch {
       /* ignore */
     }
@@ -70,53 +82,54 @@ const Voice = (() => {
     } catch {
       /* ignore */
     }
-    for (const src of currentSources) {
+    if (current) {
       try {
-        src.onended = null;
-        src.stop();
+        current.onended = null;
+        current.onerror = null;
+        current.pause();
+        current.removeAttribute("src");
+        current.load();
       } catch {
         /* ignore */
       }
+      current = null;
     }
-    currentSources = [];
     return playGen;
   }
 
-  function playBuffer(buf, gen) {
-    return new Promise(async (resolve) => {
+  function playUrl(url, gen) {
+    return new Promise((resolve) => {
       if (gen !== playGen) {
-        resolve();
+        resolve(false);
         return;
       }
-      try {
-        const ctx = audioCtx();
-        if (ctx.state === "suspended") await ctx.resume();
-        if (gen !== playGen) {
-          resolve();
-          return;
-        }
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        src.playbackRate.value = rate;
-        src.connect(ctx.destination);
-        currentSources.push(src);
-        src.onended = () => {
-          currentSources = currentSources.filter((x) => x !== src);
-          resolve();
-        };
-        src.start();
-      } catch {
-        resolve();
+      const audio = new Audio(url);
+      audio.playbackRate = rate;
+      audio.preload = "auto";
+      current = audio;
+      const done = (ok) => {
+        if (current === audio) current = null;
+        resolve(ok);
+      };
+      audio.onended = () => done(true);
+      audio.onerror = () => {
+        console.warn("[Voice] 播放失败:", url);
+        done(false);
+      };
+      const p = audio.play();
+      if (p && typeof p.then === "function") {
+        p.catch((err) => {
+          console.warn("[Voice] play() 被拒绝（需先点击页面）:", err && err.message ? err.message : err);
+          done(false);
+        });
       }
     });
   }
 
-  /** 只播整段文件，不拼接、不拼文字 */
   async function speakWhole(key, gen) {
-    const buf = cache.get(String(key));
-    if (!buf) return false;
-    await playBuffer(buf, gen);
-    return true;
+    const k = String(key);
+    if (ready && !available.has(k)) return false;
+    return playUrl(clipUrl(k), gen);
   }
 
   async function speakWavNumber(channel, gen) {
@@ -127,8 +140,7 @@ const Voice = (() => {
     const n = Math.max(0, Math.round(ma));
     const okCh = await speakWhole(channel, gen);
     if (!okCh || gen !== playGen) return okCh;
-    // 毫安也用整段 maN；没有则只报通道号
-    if (cache.has(`ma${n}`)) {
+    if (!ready || available.has(`ma${n}`)) {
       await speakWhole(`ma${n}`, gen);
     }
     return true;
@@ -150,6 +162,13 @@ const Voice = (() => {
       } catch {
         /* ignore */
       }
+      if (current) {
+        try {
+          current.playbackRate = rate;
+        } catch {
+          /* ignore */
+        }
+      }
       return rate;
     },
     getRate() {
@@ -169,7 +188,7 @@ const Voice = (() => {
 
       const gen = stopSpeaking();
       (async () => {
-        await unlock();
+        if (!unlocked) await unlock();
         if (gen !== playGen) return;
         if (!ready) {
           console.warn("[Voice] 词片未加载，请运行: python scripts/generate_wavs.py");
@@ -177,12 +196,12 @@ const Voice = (() => {
         }
         if (ev.kind === "di" || ev.kind === "dq") {
           const ok = await speakWavNumber(ev.channel, gen);
-          if (!ok) console.warn("[Voice] 缺少整段词片:", ev.channel);
+          if (!ok) console.warn("[Voice] 缺少或无法播放词片:", ev.channel);
         } else if (ev.kind === "ai") {
           const ok = await speakWavAi(ev.channel, ev.ma ?? 0, gen);
-          if (!ok) console.warn("[Voice] 缺少整段词片:", ev.channel);
+          if (!ok) console.warn("[Voice] 缺少或无法播放词片:", ev.channel);
         }
-      })().catch(() => {});
+      })().catch((e) => console.warn("[Voice] announce 异常", e));
     },
     sayChannel(channel) {
       this.announce({ kind: "dq", channel });

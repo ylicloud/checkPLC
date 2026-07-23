@@ -758,6 +758,7 @@ $("btnMockDi").onclick = async () => {
   if (!s) return alert("无启用 DI 槽，请先在「配置」页勾选 DI 模块并保存");
   const msg = $("diMockMsg");
   try {
+    // 必须在 await 之前解锁：用户手势会在第一个 await 后失效
     await Voice.unlock();
     if (msg) msg.textContent = "模拟中…";
     // 先拉低，确保扫描器看到 OFF，再置高触发上升沿
