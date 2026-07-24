@@ -696,5 +696,8 @@
       "eng_min_ma": 4
     }
   ],
-  "ai_announce_threshold_ma": 0.5
+  "ai_announce_threshold_ma": 0.5,
+  "ai_announce_threshold_pct": 10,
+  "ai_announce_cooldown_ms": 1000,
+  "ai_settle_ms": 300
 }

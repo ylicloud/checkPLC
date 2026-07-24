@@ -392,6 +392,7 @@ def modules_to_cabinet(
         "aq": pad_slots("aq", by_kind.get("aq", [])),
         "ai_announce_threshold_pct": 10,
         "ai_announce_cooldown_ms": 1000,
+        "ai_settle_ms": 300,
         "_import": {
             "source": "tia_cax_aml",
             "modules_found": [

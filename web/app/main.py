@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config_store
@@ -50,8 +50,16 @@ def health() -> dict:
 
 
 @app.get("/api/configs")
-def configs() -> dict:
-    return {"items": config_store.list_configs()}
+def configs() -> JSONResponse:
+    items = config_store.list_configs()
+    return JSONResponse(
+        content={
+            "items": items,
+            "count": len(items),
+            "dir": str(config_store.CONFIG_DIR.resolve()),
+        },
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @app.get("/api/configs/{name}")
@@ -167,6 +175,9 @@ def snapshot() -> dict:
             "text": e.text,
             "ma": e.ma,
             "ts": e.ts,
+            "module_name": e.module_name,
+            "module_index": e.module_index,
+            "module_count": e.module_count,
         }
         for e in scanner.pop_events()
     ]
@@ -197,10 +208,16 @@ def mock_di(body: MockDiRequest) -> dict:
         raise HTTPException(400, "仅 mock 模式可用")
     bridge.mock_set_di_bit(body.start_addr, body.bit, body.value)
     scanner.note_mock_di(body.start_addr, body.bit, body.value)
-    channel = None
+    info = None
     if body.value:
-        channel = scanner.inject_di_rising(body.start_addr, body.bit)
-    return {"ok": True, "channel": channel}
+        info = scanner.inject_di_rising(body.start_addr, body.bit)
+    return {
+        "ok": True,
+        "channel": info["channel"] if info else None,
+        "module_name": info.get("module_name") if info else None,
+        "module_index": info.get("module_index") if info else None,
+        "module_count": info.get("module_count") if info else None,
+    }
 
 
 @app.post("/api/mock/ai")
@@ -211,14 +228,23 @@ def mock_ai(body: MockAiRequest) -> dict:
     info = scanner.inject_ai_change(body.start_addr, body.raw)
     return {
         "ok": True,
-        "channel": info[0] if info else None,
-        "ma": info[1] if info else None,
+        "channel": info["channel"] if info else None,
+        "ma": info["ma"] if info else None,
+        "module_name": info.get("module_name") if info else None,
+        "module_index": info.get("module_index") if info else None,
+        "module_count": info.get("module_count") if info else None,
     }
 
 
 @app.get("/")
 def index() -> FileResponse:
-    return FileResponse(FRONTEND / "index.html")
+    return FileResponse(
+        FRONTEND / "index.html",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "Pragma": "no-cache",
+        },
+    )
 
 
 app.mount("/assets", StaticFiles(directory=FRONTEND / "assets"), name="assets")

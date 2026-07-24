@@ -2,7 +2,7 @@
 
 Requires: pip install edge-tts
 Usage:  python scripts/generate_wavs.py
-Output: web/frontend/assets/voice/*.mp3
+Output: web/frontend/assets/voice/*.mp3   （注意：只生成 mp3，不生成 wav）
 
 - 通道号 1~32：整段合成
 - 毫安 ma0~ma24：整段「四毫安」（数字+毫安一次合成，无停顿）

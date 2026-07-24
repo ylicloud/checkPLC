@@ -37,8 +37,9 @@ class S7Bridge:
         self.slot = 1
         self.db_config = 10
         self.db_runtime = 11
-        self._mock_i = bytearray(256)
-        self._mock_q = bytearray(256)
+        # 过程映像按字节地址；柜体常有 I280+ / IW312+，256 会截断读导致扫描 IndexError
+        self._mock_i = bytearray(1024)
+        self._mock_q = bytearray(1024)
         self._mock_db10 = bytearray(960)
         self._mock_db11 = bytearray(724)
 

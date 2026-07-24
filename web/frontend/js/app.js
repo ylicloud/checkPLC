@@ -157,7 +157,12 @@ function showPage(name) {
     ensureDqSlotOptions();
     buildDqGrid(lastDqForce);
   }
-  if (name === "config") renderSlots();
+  if (name === "config") {
+    renderSlots();
+    refreshConfigList($("cfgName")?.value?.trim()).catch((e) =>
+      console.warn("[cfg] 刷新列表失败", e)
+    );
+  }
   if (name === "di") renderDiAddrTable(lastDiStates);
   if (name === "ai") renderAiTable(lastAiValues);
   if (name === "aq") renderAqTable(lastAqValues);
@@ -165,19 +170,89 @@ function showPage(name) {
 
 const LAST_CFG_KEY = "checkplc_last_config";
 
+/** @type {string} */
+let selectedCfgName = "";
+
+function getCfgListItems() {
+  const host = $("cfgList");
+  if (!host) return [];
+  if (host.tagName === "SELECT") {
+    return [...host.options].map((o) => o.value).filter(Boolean);
+  }
+  return [...host.querySelectorAll("li[data-name]")].map((li) => li.dataset.name);
+}
+
+function setSelectedCfg(name) {
+  selectedCfgName = name || "";
+  const host = $("cfgList");
+  if (!host) return;
+  if (host.tagName === "SELECT") {
+    if (selectedCfgName) host.value = selectedCfgName;
+  } else {
+    host.querySelectorAll("li[data-name]").forEach((li) => {
+      li.classList.toggle("active", li.dataset.name === selectedCfgName);
+    });
+  }
+  if (selectedCfgName) $("cfgName").value = selectedCfgName;
+}
+
 async function refreshConfigList(preferName) {
-  const { items } = await api("/api/configs");
-  const sel = $("cfgList");
+  const data = await api("/api/configs?t=" + Date.now());
+  const items = Array.isArray(data.items) ? data.items.map(String) : [];
+  const host = $("cfgList");
+  const hint = $("cfgListHint");
   const want =
     preferName ||
     $("cfgName")?.value?.trim() ||
     localStorage.getItem(LAST_CFG_KEY) ||
-    sel.value ||
+    selectedCfgName ||
     "";
-  sel.innerHTML = items.map((n) => `<option value="${n}">${n}</option>`).join("");
-  if (want && items.includes(want)) sel.value = want;
-  else if (items.includes("example_cabinet")) sel.value = "example_cabinet";
-  else if (items.length) sel.value = items[0];
+
+  if (!host) {
+    console.warn("[cfg] #cfgList 不存在，请强制刷新页面");
+    return items;
+  }
+
+  // 兼容误缓存的 <select>：清掉后按 ul 使用；若仍是 select 则改写为 option
+  const isSelect = host.tagName === "SELECT";
+  host.innerHTML = "";
+  if (!items.length) {
+    if (isSelect) {
+      const opt = document.createElement("option");
+      opt.disabled = true;
+      opt.textContent = "（目录中没有 .json 配置）";
+      host.appendChild(opt);
+    } else {
+      host.innerHTML = `<li class="empty">（目录中没有 .json 配置）</li>`;
+    }
+  } else if (isSelect) {
+    for (const n of items) {
+      const opt = document.createElement("option");
+      opt.value = n;
+      opt.textContent = n;
+      host.appendChild(opt);
+    }
+  } else {
+    for (const n of items) {
+      const li = document.createElement("li");
+      li.setAttribute("role", "option");
+      li.dataset.name = n;
+      li.textContent = n;
+      host.appendChild(li);
+    }
+  }
+
+  if (want && items.includes(want)) setSelectedCfg(want);
+  else if (items.includes("example_cabinet")) setSelectedCfg("example_cabinet");
+  else if (items.length) setSelectedCfg(items[0]);
+  else setSelectedCfg("");
+
+  if (hint) {
+    const dirText = data.dir || "configs";
+    const names = items.length ? items.join("、") : "无";
+    hint.textContent = `共 ${items.length} 个配置：${names} · 目录 ${dirText}`;
+  }
+  console.info("[cfg] 配置列表", items.length, items, data.dir);
   return items;
 }
 
@@ -196,8 +271,7 @@ async function loadCabinet(name) {
     }
   }
   $("cfgName").value = safe;
-  const sel = $("cfgList");
-  if (sel && [...sel.options].some((o) => o.value === safe)) sel.value = safe;
+  setSelectedCfg(safe);
   localStorage.setItem(LAST_CFG_KEY, safe);
   $("plcIp").value = cabinet.plc?.ip || "192.168.0.1";
   $("plcRack").value = cabinet.plc?.rack ?? 0;
@@ -439,6 +513,11 @@ function buildDqGrid(forceBits) {
         dqAllowZeroFromServer = false;
         updateDqButtonStates(lastDqForce);
         btn.disabled = true;
+        // 必须在 await 之前播报，否则浏览器会拦截 play()（下午无声的主因）
+        if (turnOn) {
+          Voice.unlock();
+          Voice.sayChannel(ch);
+        }
         try {
           const r = await api("/api/dq/set", {
             method: "POST",
@@ -451,7 +530,6 @@ function buildDqGrid(forceBits) {
           $("dqStatus").textContent = turnOn
             ? `已强制通道 ${ch} 为高`
             : `已关闭通道 ${ch}`;
-          if (turnOn) Voice.sayChannel(ch);
         } catch (e) {
           if (turnOn) lastDqForce[slot - 1] = (Number(lastDqForce[slot - 1]) || 0) & ~mask;
           else lastDqForce[slot - 1] = (Number(lastDqForce[slot - 1]) || 0) | mask;
@@ -575,17 +653,103 @@ function renderAqTable(values) {
 }
 
 
+function updateDiHero(info) {
+  const hero = $("diHero");
+  const line = $("diModuleLine");
+  if (!hero) return;
+
+  let ch = null;
+  let name = "";
+  let idx = null;
+  let cnt = null;
+
+  if (info == null) {
+    return;
+  }
+  if (typeof info === "number" || typeof info === "string") {
+    ch = Number(info);
+  } else if (typeof info === "object") {
+    let raw = info.channel;
+    if (raw != null && typeof raw === "object" && raw.channel != null) {
+      raw = raw.channel;
+    }
+    ch = raw != null ? Number(raw) : null;
+    name = info.module_name != null ? String(info.module_name) : "";
+    idx = info.module_index != null ? Number(info.module_index) : null;
+    cnt = info.module_count != null ? Number(info.module_count) : null;
+  }
+
+  if (ch == null || Number.isNaN(ch)) {
+    console.warn("[DI] active_di 无效，忽略:", info);
+    return;
+  }
+
+  hero.textContent = String(ch);
+  if (line) {
+    if (name && idx && cnt) line.textContent = `${name}（${idx}/${cnt}）`;
+    else if (name) line.textContent = name;
+    else line.textContent = "";
+  }
+}
+
+function updateAiHero(info) {
+  const hero = $("aiHero");
+  const line = $("aiModuleLine");
+  if (!hero) return;
+
+  let ch = null;
+  let ma = null;
+  let name = "";
+  let idx = null;
+  let cnt = null;
+  let text = "";
+
+  if (info == null) return;
+  if (typeof info === "object") {
+    let raw = info.channel;
+    if (raw != null && typeof raw === "object" && raw.channel != null) {
+      raw = raw.channel;
+    }
+    ch = raw != null ? Number(raw) : null;
+    if (info.ma != null) ma = Number(info.ma);
+    name = info.module_name != null ? String(info.module_name) : "";
+    idx = info.module_index != null ? Number(info.module_index) : null;
+    cnt = info.module_count != null ? Number(info.module_count) : null;
+    if (info.text) text = String(info.text);
+  } else {
+    ch = Number(info);
+  }
+
+  if (ch == null || Number.isNaN(ch)) {
+    console.warn("[AI] active_ai 无效，忽略:", info);
+    return;
+  }
+
+  hero.textContent = String(ch);
+  if (line) {
+    if (name && idx && cnt) line.textContent = `${name}（${idx}/${cnt}）`;
+    else if (name) line.textContent = name;
+    else line.textContent = "";
+  }
+  const aiText = $("aiText");
+  if (aiText) {
+    if (text) aiText.textContent = text;
+    else if (ma != null && !Number.isNaN(ma)) {
+      aiText.textContent = `通道 ${ch}，${ma.toFixed(1)} mA`;
+    }
+  }
+}
+
 async function poll(opts = {}) {
   const silent = !!opts.silent;
   try {
     const snap = await api("/api/snapshot");
     applyConnFromSnap(snap);
-    if (snap.active_di != null) {
-      $("diHero").textContent = String(snap.active_di);
+    if (snap.active_di) {
+      updateDiHero(snap.active_di);
     }
     if (snap.active_ai) {
-      $("aiHero").textContent = String(snap.active_ai.channel);
-      $("aiText").textContent = `通道 ${snap.active_ai.channel}，${snap.active_ai.ma.toFixed(1)} mA`;
+      updateAiHero(snap.active_ai);
     }
     renderDiChips(snap.di_states);
     renderAiTable(snap.ai_values);
@@ -606,12 +770,11 @@ async function poll(opts = {}) {
     }
     for (const ev of snap.events || []) {
       if (ev.kind === "di") {
-        $("diHero").textContent = String(ev.channel);
-        $("diText").textContent = ev.text;
+        updateDiHero(ev);
+        $("diText").textContent = ev.text || `通道 ${ev.channel}`;
       }
       if (ev.kind === "ai") {
-        $("aiHero").textContent = String(ev.channel);
-        $("aiText").textContent = ev.text;
+        updateAiHero(ev);
       }
     }
     // 只播最新一条（后端已覆盖旧事件；前端再打断旧语音）
@@ -696,8 +859,8 @@ $("btnDisconnect").onclick = async () => {
 };
 
 $("btnLoadCfg").onclick = async () => {
-  const name = sanitizeConfigName($("cfgList").value || $("cfgName").value);
-  if (!name) return alert("请先在下拉框选择要加载的配置");
+  const name = sanitizeConfigName(selectedCfgName || $("cfgName").value);
+  if (!name) return alert("请先在列表中选择要加载的配置");
   $("cfgName").value = name;
   try {
     const meta = await loadCabinet(name);
@@ -710,9 +873,40 @@ $("btnLoadCfg").onclick = async () => {
   }
 };
 
-$("cfgList").onchange = () => {
-  if ($("cfgList").value) $("cfgName").value = $("cfgList").value;
+$("cfgList").onclick = (e) => {
+  const host = $("cfgList");
+  if (host.tagName === "SELECT") return;
+  const li = e.target.closest("li[data-name]");
+  if (!li) return;
+  setSelectedCfg(li.dataset.name);
 };
+$("cfgList").onchange = () => {
+  const host = $("cfgList");
+  if (host.tagName === "SELECT" && host.value) setSelectedCfg(host.value);
+};
+$("cfgList").ondblclick = (e) => {
+  const host = $("cfgList");
+  if (host.tagName === "SELECT") {
+    if (host.value) {
+      setSelectedCfg(host.value);
+      $("btnLoadCfg").click();
+    }
+    return;
+  }
+  const li = e.target.closest("li[data-name]");
+  if (!li) return;
+  setSelectedCfg(li.dataset.name);
+  $("btnLoadCfg").click();
+};
+if ($("btnRefreshCfg")) {
+  $("btnRefreshCfg").onclick = async () => {
+    try {
+      await refreshConfigList($("cfgName").value.trim());
+    } catch (e) {
+      alert("刷新配置列表失败: " + e.message);
+    }
+  };
+}
 
 $("btnSaveCfg").onclick = async () => {
   collectSlotsFromDom();
@@ -785,10 +979,10 @@ $("btnMockDi").onclick = async () => {
   if (!s) return alert("无启用 DI 槽，请先在「配置」页勾选 DI 模块并保存");
   const msg = $("diMockMsg");
   try {
-    // 必须在 await 之前解锁：用户手势会在第一个 await 后失效
-    await Voice.unlock();
+    // 点击瞬间解锁并先播通道 1（手势内）；API 返回后若通道不同再补播
+    Voice.unlock();
+    Voice.announce({ kind: "di", channel: 1 });
     if (msg) msg.textContent = "模拟中…";
-    // 先拉低，确保扫描器看到 OFF，再置高触发上升沿
     await api("/api/mock/di", {
       method: "POST",
       body: JSON.stringify({ start_addr: s.start_addr, bit: 0, value: false }),
@@ -802,12 +996,11 @@ $("btnMockDi").onclick = async () => {
     if (r.channel == null) {
       if (msg) msg.textContent = "已写入 Mock 位，但未匹配到 DI 配置（请配置页保存后重试）";
     } else {
-      $("diHero").textContent = String(ch);
+      updateDiHero(r);
       $("diText").textContent = "通道 " + ch;
       if (msg) msg.textContent = `已模拟 DI 通道 ${ch} 上升沿`;
     }
-    // 按钮播报一次；silent poll 只刷新指示灯，不再播报
-    Voice.announce({ kind: "di", channel: ch });
+    if (ch !== 1) Voice.announce({ kind: "di", channel: ch });
     await poll({ silent: true });
   } catch (e) {
     if (msg) msg.textContent = "";
@@ -823,20 +1016,23 @@ $("btnMockAi").onclick = async () => {
   if (!s) return alert("无启用 AI 槽，请先在「配置」页勾选 AI 模块并保存");
   const msg = $("aiMockMsg");
   try {
-    await Voice.unlock();
+    const approxMa = 5;
+    Voice.unlock();
+    Voice.announce({ kind: "ai", channel: 1, ma: approxMa });
     if (msg) msg.textContent = "模拟中…";
     const r = await api("/api/mock/ai", {
       method: "POST",
       body: JSON.stringify({
         start_addr: s.start_addr,
-        raw: Math.round(((5 - 4) / 16) * 27648),
+        raw: Math.round(((approxMa - 4) / 16) * 27648),
       }),
     });
     const ch = r.channel || 1;
-    const ma = r.ma != null ? r.ma : 5;
-    $("aiHero").textContent = String(ch);
-    $("aiText").textContent = `通道 ${ch}，${Number(ma).toFixed(1)} mA`;
-    Voice.announce({ kind: "ai", channel: ch, ma });
+    const ma = r.ma != null ? r.ma : approxMa;
+    updateAiHero(r);
+    if (ch !== 1 || Math.round(ma) !== approxMa) {
+      Voice.announce({ kind: "ai", channel: ch, ma });
+    }
     await poll({ silent: true });
     if (msg) msg.textContent = `已模拟 AI 通道 ${ch} ≈${Number(ma).toFixed(1)}mA`;
   } catch (e) {
@@ -884,7 +1080,7 @@ $("dqSlot").onchange = () => {
 
 (async function init() {
   document.querySelector('.slot-tools button[data-kind="di"]').classList.add("active");
-  document.body.addEventListener("click", () => Voice.unlock(), { once: false, passive: true });
+  document.body.addEventListener("click", () => Voice.unlock(), { once: true, passive: true });
   // 语音速度：1 / 1.2 / 1.5 / 1.8 / 2
   const rateSel = $("voiceRate");
   if (rateSel) {
@@ -908,11 +1104,11 @@ $("dqSlot").onchange = () => {
     /* ignore */
   }
   await refreshConfigList();
-  const items = [...$("cfgList").options].map((o) => o.value);
+  const items = getCfgListItems();
   const last = localStorage.getItem(LAST_CFG_KEY);
   const name =
     (last && items.includes(last) && last) ||
-    $("cfgList").value ||
+    selectedCfgName ||
     "example_cabinet";
   try {
     await loadCabinet(name);

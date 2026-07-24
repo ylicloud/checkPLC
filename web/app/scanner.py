@@ -19,6 +19,9 @@ class AnnounceEvent:
     text: str
     ma: Optional[float] = None
     ts: float = field(default_factory=time.time)
+    module_name: Optional[str] = None
+    module_index: Optional[int] = None
+    module_count: Optional[int] = None
 
 
 class IoScanner:
@@ -28,8 +31,9 @@ class IoScanner:
         self._prev_di: dict[tuple[int, int], bool] = {}
         self._prev_ai: dict[int, float] = {}
         self._queue: Deque[AnnounceEvent] = deque()
-        self._active_di: Optional[int] = None
-        self._active_ai: Optional[tuple[int, float]] = None
+        # {channel, module_name, module_index, module_count}
+        self._active_di: Optional[dict[str, Any]] = None
+        self._active_ai: Optional[dict[str, Any]] = None
         self._di_states: dict[int, bool] = {}
         self._ai_values: dict[int, float] = {}
         self._aq_values: list[float] = []
@@ -37,17 +41,23 @@ class IoScanner:
         self._running = False
         self._thread: Optional[threading.Thread] = None
         self._error: Optional[str] = None
-        self._ai_last_announce_ts: float = 0.0
-        # 每通道已播报/已测过的毫安整数值：回到原值 A 不再播报
-        self._ai_seen_ma: dict[int, set[int]] = {}
+        # AI：连接后首次采样为 baseline；近 baseline 不播；settle + 每通道 cooldown
+        self._ai_baseline: dict[int, float] = {}
+        self._ai_last_announced: dict[int, float] = {}
+        self._ai_last_announce_ts: dict[int, float] = {}
+        # global_ch -> (candidate_ma, since_ts)
+        self._ai_settle: dict[int, tuple[float, float]] = {}
 
     def set_cabinet(self, cabinet: dict[str, Any]) -> None:
         with self._lock:
             self._cabinet = cabinet
             self._prev_di.clear()
             self._prev_ai.clear()
-            self._ai_last_announce_ts = 0.0
-            self._ai_seen_ma.clear()
+            self._ai_baseline.clear()
+            self._ai_last_announced.clear()
+            self._ai_last_announce_ts.clear()
+            self._ai_settle.clear()
+            self._active_di = None
 
     def get_cabinet(self) -> dict[str, Any]:
         with self._lock:
@@ -89,25 +99,64 @@ class IoScanner:
             self._active_ai = None
             self._prev_di.clear()
             self._prev_ai.clear()
-            self._ai_last_announce_ts = 0.0
-            self._ai_seen_ma.clear()
-
-    def _mark_ai_seen(self, global_ch: int, *ma_vals: float) -> None:
-        bucket = self._ai_seen_ma.setdefault(global_ch, set())
-        for v in ma_vals:
-            if v is None:
-                continue
-            bucket.add(self._ma_announce_key(v))
+            self._ai_baseline.clear()
+            self._ai_last_announced.clear()
+            self._ai_last_announce_ts.clear()
+            self._ai_settle.clear()
 
     @staticmethod
-    def _ma_announce_key(ma: float) -> int:
-        """播报去重键：0..24 用整毫安；>24 统一为 25（超出）。"""
-        n = int(round(float(ma)))
-        if n < 0:
-            return 0
-        if n > 24:
-            return 25
-        return n
+    def _enabled_modules(cabinet: dict[str, Any], kind: str) -> list[dict[str, Any]]:
+        return sorted(
+            [s for s in (cabinet.get(kind) or []) if s.get("enable")],
+            key=lambda x: int(x.get("slot", 0)),
+        )
+
+    def _module_context(
+        self, cabinet: dict[str, Any], kind: str, slot: int
+    ) -> tuple[str, int, int]:
+        enabled = self._enabled_modules(cabinet, kind)
+        count = len(enabled)
+        for i, s in enumerate(enabled, start=1):
+            if int(s.get("slot", 0)) == int(slot):
+                name = str(s.get("name") or "").strip() or f"{kind.upper()}{slot}"
+                return name, i, count
+        return "", 0, count
+
+    def _set_active_ai(
+        self, cabinet: dict[str, Any], slot: int, local_ch: int, ma: float
+    ) -> dict[str, Any]:
+        name, idx, cnt = self._module_context(cabinet, "ai", slot)
+        info = {
+            "channel": local_ch,
+            "ma": float(ma),
+            "module_name": name,
+            "module_index": idx,
+            "module_count": cnt,
+        }
+        self._active_ai = info
+        return info
+
+    def _set_active_di(self, cabinet: dict[str, Any], slot: int, local_ch: int) -> dict[str, Any]:
+        name, idx, cnt = self._module_context(cabinet, "di", slot)
+        info = {
+            "channel": local_ch,
+            "module_name": name,
+            "module_index": idx,
+            "module_count": cnt,
+        }
+        self._active_di = info
+        return info
+
+    @staticmethod
+    def _ref_scale(ref: float, span: float) -> float:
+        return abs(ref) if abs(ref) > 1e-6 else max(span * 0.1, 1.0)
+
+    def _pct_diff(self, a: float, b: float, span: float, thr_pct: float) -> bool:
+        """|a-b| >= thr_pct * scale(b) → True（变化够大）。"""
+        return abs(a - b) >= self._ref_scale(b, span) * thr_pct
+
+    def _near_baseline(self, ma: float, baseline: float, span: float, thr_pct: float) -> bool:
+        return abs(ma - baseline) < self._ref_scale(baseline, span) * thr_pct
 
     def _push_event(self, ev: AnnounceEvent) -> None:
         """新播报覆盖旧播报，不排队。"""
@@ -123,12 +172,8 @@ class IoScanner:
                 except Exception:  # noqa: BLE001
                     dq_q_masks = [0] * 20
             return {
-                "active_di": self._active_di,
-                "active_ai": (
-                    {"channel": self._active_ai[0], "ma": self._active_ai[1]}
-                    if self._active_ai
-                    else None
-                ),
+                "active_di": dict(self._active_di) if self._active_di else None,
+                "active_ai": dict(self._active_ai) if self._active_ai else None,
                 "di_states": dict(self._di_states),
                 "ai_values": {str(k): v for k, v in self._ai_values.items()},
                 "aq_values": list(self._aq_values),
@@ -207,9 +252,9 @@ class IoScanner:
                         bridge._mock_q[start + bi] = byte_val  # noqa: SLF001
 
 
-    def inject_di_rising(self, start_addr: int, bit: int) -> Optional[int]:
+    def inject_di_rising(self, start_addr: int, bit: int) -> Optional[dict[str, Any]]:
         """Mock 专用：按过程映像地址注入一次 DI 上升沿播报（不依赖扫描时序）。
-        返回槽内通道号（1..N），不累加全局号。"""
+        返回 active_di 字典（槽内通道号 + 模块上下文）。"""
         with self._lock:
             cabinet = self._cabinet
             if not cabinet:
@@ -232,14 +277,13 @@ class IoScanner:
                     local_ch = ch + 1
                     self._prev_di[(slot, ch)] = True
                     self._di_states[global_ch] = True
-                    self._active_di = local_ch
                     # 不入队：由前端按钮播报一次，避免与 poll 事件重复
-                    return local_ch
+                    return self._set_active_di(cabinet, slot, local_ch)
             return None
 
-    def inject_ai_change(self, start_addr: int, raw: int) -> Optional[tuple[int, float]]:
+    def inject_ai_change(self, start_addr: int, raw: int) -> Optional[dict[str, Any]]:
         """Mock 专用：按 AI 起始地址更新状态（播报由前端触发一次）。
-        返回 (槽内通道号, mA)。"""
+        返回 {channel, ma, module_name, ...}。"""
         with self._lock:
             cabinet = self._cabinet
             if not cabinet:
@@ -262,24 +306,27 @@ class IoScanner:
                 if r >= 0x8000:
                     r -= 0x10000
                 ma = eng_min + (r / raw_full) * span if raw_full else eng_min
-                # Mock 按钮默认打通道 0（槽内第 1 路）
                 ch = 0
                 global_ch = next((g for g, ss, c in gmap if ss == slot and c == ch), None)
                 if global_ch is None:
                     return None
                 local_ch = ch + 1
-                prev = self._prev_ai.get(global_ch)
+                if global_ch not in self._ai_baseline:
+                    self._ai_baseline[global_ch] = ma
                 self._prev_ai[global_ch] = ma
                 self._ai_values[global_ch] = ma
-                self._active_ai = (local_ch, ma)
-                self._ai_last_announce_ts = time.time()
-                # 与真机一致：记下原值与本次值，回落到原值不再播
-                if prev is not None:
-                    self._mark_ai_seen(global_ch, prev, ma)
-                else:
-                    self._mark_ai_seen(global_ch, ma)
-                # 不入队：由前端按钮播报一次
-                return (local_ch, ma)
+                self._active_ai = self._set_active_ai(cabinet, slot, local_ch, ma)
+                self._ai_last_announced[global_ch] = ma
+                self._ai_last_announce_ts[global_ch] = time.time()
+                self._ai_settle.pop(global_ch, None)
+                name, idx, cnt = self._module_context(cabinet, "ai", slot)
+                return {
+                    "channel": local_ch,
+                    "ma": ma,
+                    "module_name": name,
+                    "module_index": idx,
+                    "module_count": cnt,
+                }
             return None
 
     def note_mock_di(self, start_addr: int, bit: int, value: bool) -> None:
@@ -352,12 +399,18 @@ class IoScanner:
             masks[slot - 1] = bits
         return masks
 
+    @staticmethod
+    def _pad_read(data: bytes, need: int) -> bytes:
+        """过程映像读不足时补 0，避免 IndexError 中断整次扫描（含 AQ）。"""
+        if len(data) >= need:
+            return data
+        return data + bytes(need - len(data))
+
     def _scan_once(self, cabinet: dict[str, Any]) -> None:
-        # AI：A→B（>10%）播 B；回到已测过的 A 不再播；1 秒内只播第一次
         thr_pct = float(cabinet.get("ai_announce_threshold_pct", 10.0)) / 100.0
         cooldown_s = float(cabinet.get("ai_announce_cooldown_ms", 1000)) / 1000.0
+        settle_s = float(cabinet.get("ai_settle_ms", 300)) / 1000.0
         now = time.time()
-        # 注意：此处不再回读 DQ_Force；以 set_dq_bit/reset 维护的本地位图为准
         # DI：播报槽内通道 1..N，不累加全局号
         gmap = db_layout.global_channel_map(cabinet, "di")
         slots = {s["slot"]: s for s in cabinet.get("di", []) if s.get("enable")}
@@ -365,7 +418,10 @@ class IoScanner:
             start = int(conf["start_addr"])
             n = int(conf["channel_count"])
             nbytes = (n + 7) // 8
-            data = bridge.read_area_i(start, nbytes)
+            try:
+                data = self._pad_read(bridge.read_area_i(start, nbytes), nbytes)
+            except Exception:  # noqa: BLE001
+                continue
             for ch in range(n):
                 byte_i = ch // 8
                 bit_i = ch % 8
@@ -377,19 +433,21 @@ class IoScanner:
                     continue
                 local_ch = ch + 1
                 self._di_states[global_ch] = val
-                # 上升沿：False→True，以及首次 None→True（避免 Mock 短脉冲被跳过）
                 if val and prev is not True:
-                    self._active_di = local_ch
+                    info = self._set_active_di(cabinet, slot, local_ch)
                     self._push_event(
                         AnnounceEvent(
                             kind="di",
                             channel=local_ch,
                             text=self._zh_number(local_ch),
+                            module_name=info["module_name"],
+                            module_index=info["module_index"],
+                            module_count=info["module_count"],
                         )
                     )
                 self._prev_di[key] = val
 
-        # AI
+        # AI：baseline / 近空载不播 / settle / 每通道 cooldown
         gmap_ai = db_layout.global_channel_map(cabinet, "ai")
         slots_ai = {s["slot"]: s for s in cabinet.get("ai", []) if s.get("enable")}
         for slot, conf in slots_ai.items():
@@ -401,41 +459,74 @@ class IoScanner:
             if eng_max <= eng_min:
                 eng_min, eng_max = 4.0, 20.0
             span = eng_max - eng_min
-            data = bridge.read_area_i(start, n * 2)
+            need = n * 2
+            try:
+                data = self._pad_read(bridge.read_area_i(start, need), need)
+            except Exception:  # noqa: BLE001
+                continue
             for ch in range(n):
                 hi, lo = data[ch * 2], data[ch * 2 + 1]
                 raw = (hi << 8) | lo
                 if raw >= 0x8000:
                     raw -= 0x10000
-                # 4~20mA 组态：0→eng_min，27648→eng_max
                 ma = eng_min + (raw / raw_full) * span if raw_full else eng_min
                 global_ch = next((g for g, s, c in gmap_ai if s == slot and c == ch), None)
                 if global_ch is None:
                     continue
                 local_ch = ch + 1
                 self._ai_values[global_ch] = ma
-                prev = self._prev_ai.get(global_ch)
-                ma_i = self._ma_announce_key(ma)
-                seen = self._ai_seen_ma.get(global_ch) or set()
-                # 首次只记基准原值 A，不播报；仅在 A→B 且变化够大时播 B
-                should = False
-                if prev is not None and ma_i not in seen:
-                    base = abs(prev) if abs(prev) > 1e-6 else max(span * 0.1, 1.0)
-                    should = abs(ma - prev) >= base * thr_pct
-                if should and (now - self._ai_last_announce_ts) >= cooldown_s:
-                    self._active_ai = (local_ch, ma)
-                    ma_txt = self._zh_ma(ma)
-                    self._push_event(
-                        AnnounceEvent(
-                            kind="ai",
-                            channel=local_ch,
-                            ma=ma,
-                            text=f"{self._zh_number(local_ch)}，{ma_txt}",
-                        )
+
+                # 连接后第一次采样 = baseline，不播
+                if global_ch not in self._ai_baseline:
+                    self._ai_baseline[global_ch] = ma
+                    self._prev_ai[global_ch] = ma
+                    self._ai_settle.pop(global_ch, None)
+                    continue
+
+                baseline = self._ai_baseline[global_ch]
+                if self._near_baseline(ma, baseline, span, thr_pct):
+                    self._prev_ai[global_ch] = ma
+                    self._ai_settle.pop(global_ch, None)
+                    continue
+
+                # 远离 baseline：相对上次已播（若无则相对 baseline）变化够大才进入滤波
+                ref = self._ai_last_announced.get(global_ch, baseline)
+                if not self._pct_diff(ma, ref, span, thr_pct):
+                    self._prev_ai[global_ch] = ma
+                    self._ai_settle.pop(global_ch, None)
+                    continue
+
+                cand = self._ai_settle.get(global_ch)
+                if cand is None or self._pct_diff(ma, cand[0], span, thr_pct):
+                    self._ai_settle[global_ch] = (ma, now)
+                    self._prev_ai[global_ch] = ma
+                    continue
+
+                if (now - cand[1]) < settle_s:
+                    self._prev_ai[global_ch] = ma
+                    continue
+
+                last_ts = self._ai_last_announce_ts.get(global_ch, 0.0)
+                if (now - last_ts) < cooldown_s:
+                    self._prev_ai[global_ch] = ma
+                    continue
+
+                announce_ma = cand[0]
+                info = self._set_active_ai(cabinet, slot, local_ch, announce_ma)
+                self._push_event(
+                    AnnounceEvent(
+                        kind="ai",
+                        channel=local_ch,
+                        ma=announce_ma,
+                        text=f"{self._zh_number(local_ch)}，{self._zh_ma(announce_ma)}",
+                        module_name=info["module_name"],
+                        module_index=info["module_index"],
+                        module_count=info["module_count"],
                     )
-                    self._ai_last_announce_ts = now
-                    # 原值 A 与本次 B 都记入已测，回落 A 或再遇 B 不再播
-                    self._mark_ai_seen(global_ch, prev, ma)
+                )
+                self._ai_last_announced[global_ch] = announce_ma
+                self._ai_last_announce_ts[global_ch] = now
+                self._ai_settle.pop(global_ch, None)
                 self._prev_ai[global_ch] = ma
 
         # AQ monitor from runtime DB（块不存在时不阻断 DI/AI）
@@ -452,10 +543,18 @@ class IoScanner:
             for _ in range(int(s["channel_count"])):
                 g += 1
                 expected.append(float(4 + ((g - 1) % 8)))  # 4~11 循环
-        if not vals or all(abs(v) < 1e-6 for v in vals[: len(expected)]):
-            self._aq_values = expected
+        # PLC/Mock 未写满或通道数刚改大时，用阶梯 expected 补齐，避免页面只显示前几路
+        if not expected:
+            self._aq_values = list(vals)
         else:
-            self._aq_values = vals[: len(expected)] if expected else vals
+            merged: list[float] = []
+            for i, exp in enumerate(expected):
+                if i < len(vals) and abs(vals[i]) >= 1e-6:
+                    merged.append(float(vals[i]))
+                else:
+                    merged.append(exp)
+            # 若运行库全空，merged 即完整 expected；若仅写了前 N 路，后段用 4~11 补齐
+            self._aq_values = merged
 
     @staticmethod
     def _zh_number(n: int) -> str:

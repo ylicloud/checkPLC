@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store" />
   <title>PLC IO 通检 Portal</title>
-  <link rel="stylesheet" href="/static/css/app.css?v=20260723g" />
+  <link rel="stylesheet" href="/static/css/app.css?v=20260724c" />
 </head>
 <body>
   <header class="top">
@@ -54,9 +55,16 @@
       <p class="hint">保存会写入 <code>configs/配置名.json</code>；刷新后自动加载上次使用的配置。切换 DI/DQ/AI/AQ 后，请勾选槽位左侧的「启用」才会纳入通检。</p>
       <div class="row">
         <label>配置名 <input id="cfgName" value="example_cabinet" /></label>
-        <select id="cfgList"></select>
         <button id="btnLoadCfg">加载</button>
         <button class="primary" id="btnSaveCfg">保存并下发</button>
+      </div>
+      <div class="cfg-list-wrap">
+        <div class="cfg-list-head">
+          <span>已保存的配置（点击选中，双击加载）</span>
+          <button type="button" id="btnRefreshCfg" class="btn-small" title="重新扫描 configs 目录">刷新列表</button>
+        </div>
+        <ul id="cfgList" class="cfg-listbox" role="listbox" aria-label="配置文件列表"></ul>
+        <p class="hint" id="cfgListHint">正在加载配置列表…</p>
       </div>
       <div class="slot-tools">
         <button data-kind="di">DI 槽</button>
@@ -79,46 +87,59 @@
 
     <section id="page-di" class="page">
       <h1>DI 通道检测</h1>
-      <div class="hero-num" id="diHero">—</div>
-      <p class="hero-sub" id="diText">等待上升沿…</p>
+      <div class="io-hero-block">
+        <div class="hero-num" id="diHero">—</div>
+        <p class="hero-sub" id="diModuleLine"></p>
+        <p class="hero-sub" id="diText">等待上升沿…</p>
+        <div class="mock-bar" id="diMock">
+          <button type="button" class="primary" id="btnMockDi">模拟通道1 上升沿</button>
+          <p class="hint mock-hint" id="diMockHint">须在「连接」页勾选 Mock 并连接后使用</p>
+          <p class="msg" id="diMockMsg"></p>
+        </div>
+      </div>
       <div class="chips" id="diChips"></div>
-      <div class="table-wrap" style="margin-top:1rem">
-        <table id="diAddrTable">
-          <thead><tr><th>通道</th><th>模块名称</th><th>槽</th><th>地址</th><th>状态</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="mock-box" id="diMock">
-        <h3>Mock 模拟</h3>
-        <p class="hint mock-hint" id="diMockHint">须在「连接」页勾选 Mock 并连接后使用</p>
-        <button type="button" id="btnMockDi">模拟 DI 通道1 上升沿</button>
-        <p class="msg" id="diMockMsg"></p>
-      </div>
+      <details class="io-detail" open>
+        <summary>通道一览</summary>
+        <div class="table-wrap io-table-scroll">
+          <table id="diAddrTable">
+            <thead><tr><th>通道</th><th>模块名称</th><th>槽</th><th>地址</th><th>状态</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
     </section>
 
     <section id="page-ai" class="page">
       <h1>AI 通道检测</h1>
-      <div class="hero-num" id="aiHero">—</div>
-      <p class="hero-sub" id="aiText">等待电流变化…</p>
-      <div class="table-wrap">
-        <table id="aiTable"><thead><tr><th>通道</th><th>模块名称</th><th>地址</th><th>mA</th></tr></thead><tbody></tbody></table>
+      <div class="io-hero-block">
+        <div class="hero-num" id="aiHero">—</div>
+        <p class="hero-sub" id="aiModuleLine"></p>
+        <p class="hero-sub" id="aiText">等待电流变化…</p>
+        <div class="mock-bar" id="aiMock">
+          <button type="button" class="primary" id="btnMockAi">模拟通道1 ≈5mA</button>
+          <p class="hint mock-hint" id="aiMockHint">须在「连接」页勾选 Mock 并连接后使用</p>
+          <p class="msg" id="aiMockMsg"></p>
+        </div>
       </div>
-      <div class="mock-box" id="aiMock">
-        <h3>Mock 模拟</h3>
-        <p class="hint mock-hint" id="aiMockHint">须在「连接」页勾选 Mock 并连接后使用</p>
-        <button type="button" id="btnMockAi">模拟 AI 通道1 ≈5mA</button>
-        <p class="msg" id="aiMockMsg"></p>
-      </div>
+      <details class="io-detail" open>
+        <summary>通道一览</summary>
+        <div class="table-wrap io-table-scroll">
+          <table id="aiTable"><thead><tr><th>通道</th><th>模块名称</th><th>地址</th><th>mA</th></tr></thead><tbody></tbody></table>
+        </div>
+      </details>
     </section>
 
     <section id="page-dq" class="page">
       <h1>DQ 强制输出</h1>
-      <div class="row">
-        <label>模块槽
-          <select id="dqSlot"></select>
-        </label>
-        <button id="btnDqResetSlot">复位本槽</button>
-        <button id="btnDqResetAll">全部复位</button>
+      <div class="row dq-slot-row">
+        <div class="dq-slot-wrap">
+          <div class="cfg-list-head"><span>模块槽（点击选中）</span></div>
+          <select id="dqSlot" size="5" class="dq-slot-list" aria-label="DQ 模块槽列表"></select>
+        </div>
+        <div class="dq-slot-actions">
+          <button id="btnDqResetSlot">复位本槽</button>
+          <button id="btnDqResetAll">全部复位</button>
+        </div>
       </div>
       <p class="hint" id="dqHint">先点「连接」。Mock 下按钮变绿即表示强制成功；真机需已下载 FC_IO_Apply。</p>
       <p class="msg" id="dqStatus"></p>
@@ -154,10 +175,10 @@
           <p class="hint">完整记录见仓库 <code>docs/更新说明.md</code>。新版本在上。</p>
           <h3>2026-07-23（当前）</h3>
           <ul>
-            <li>毫安整段「四毫安」；0～24 mA 与「超出二十四毫安」</li>
-            <li>语音 mp3 纳入 git；AQ 改为 4～11 mA 循环</li>
-            <li>DI/AI/AQ 表：模块内通道号 + 模块名称</li>
-            <li>整段语音、语速档位、帮助 / Portal 导入说明</li>
+            <li>DI 大字区：通道号 + 模块名称（x/y）</li>
+            <li>AI：相对空载初始值抑制回落播报；滤波 <code>ai_settle_ms</code>（默认 0.3s）+ 冷却 1s</li>
+            <li>语音仅 mp3；点击瞬间播报（避免无声）</li>
+            <li>毫安整段「四毫安」；AQ 4～11 mA 循环；表增加模块名称列</li>
           </ul>
           <h3>2026-07-22 · ad70fb8</h3>
           <ul>
@@ -187,9 +208,9 @@
           <ol>
             <li><b>连接</b>：填 IP / 机架 / 槽；无 PLC 可勾选 Mock。可调语音速度后点「连接」。</li>
             <li><b>配置</b>：勾选实际 DI/DQ/AI/AQ 模块，填起始地址与点数；「保存并下发」写入 <code>configs/配置名.json</code>。</li>
-            <li><b>DI</b>：端子给 24V，看大字通道号并听语音（槽内 1…N，不累加）。</li>
-            <li><b>AI</b>：加电流，变化超过约 10% 才播报；回落到已测过的原值不再播，便于测下一通道。</li>
-            <li><b>DQ</b>：选模块，点通道强制输出，万用表测端子。</li>
+            <li><b>DI</b>：端子给 24V，看大字通道号与模块名（x/y），听模块内通道号。</li>
+            <li><b>AI</b>：连接后记空载初始值；近初始（拔笔）不播；加电流且变化≥约 10%、稳定 0.3s、冷却 1s 后播「通道，N毫安」。</li>
+            <li><b>DQ</b>：选模块，点通道强制输出并听通道号，万用表测端子。</li>
             <li><b>AQ</b>：PLC 输出 4～11 mA 循环阶梯电流，本页监视。</li>
           </ol>
           <p class="hint">真机通检前需在 TIA 下载通检 DB/SCL（见仓库 <code>plc/</code>、<code>docs/</code>）。笔记本与 PLC 同网段，放行 TCP 102。</p>
@@ -301,15 +322,15 @@ python scripts/generate_wavs.py</pre>
             <li>连接页可调速度：1 / 1.2 / 1.5 / 1.8 / 2 倍。</li>
             <li>通道号按<strong>模块内</strong> 1…N 播报。</li>
             <li>&gt;20 简化读音：21→「二一」，32→「三二」。</li>
-            <li>AI：0～24 mA 有对应词片；&gt;24 播「超出二十四毫安」。</li>
-            <li>新播报会打断旧播报，不排队。</li>
+            <li>AI：相对空载初始值，近初始不播；滤波 0.3s + 冷却 1s；0～24 mA 词片，&gt;24 播「超出二十四毫安」。</li>
+            <li>只用 <code>.mp3</code>（勿请求 .wav）；新播报打断旧播报。</li>
           </ul>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="/static/js/voice.js?v=20260723k"></script>
-  <script src="/static/js/app.js?v=20260723k"></script>
+  <script src="/static/js/voice.js?v=20260724c"></script>
+  <script src="/static/js/app.js?v=20260724c"></script>
 </body>
 </html>
