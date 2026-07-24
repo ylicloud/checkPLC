@@ -6,12 +6,25 @@
     <AssemblyName>CheckPlc.TiaExport</AssemblyName>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
-    <!-- 按本机 TIA V20 安装路径修改；也可用环境变量 TIA_PUBLICAPI -->
+    <PlatformTarget>x86</PlatformTarget>
+    <!-- 优先环境变量 TIA_PUBLICAPI；否则自动探测本机 V21 / V20 -->
     <TiaPublicApi Condition="'$(TiaPublicApi)' == ''">$(TIA_PUBLICAPI)</TiaPublicApi>
-    <TiaPublicApi Condition="'$(TiaPublicApi)' == ''">C:\Program Files\Siemens\Automation\Portal V20\PublicAPI\V20</TiaPublicApi>
+    <TiaPublicApi Condition="'$(TiaPublicApi)' == '' and Exists('C:\Program Files\Siemens\Automation\Portal V21\PublicAPI\V21\net48\Siemens.Engineering.Base.dll')">C:\Program Files\Siemens\Automation\Portal V21\PublicAPI\V21\net48</TiaPublicApi>
+    <TiaPublicApi Condition="'$(TiaPublicApi)' == '' and Exists('C:\Program Files\Siemens\Automation\Portal V20\PublicAPI\V20\Siemens.Engineering.dll')">C:\Program Files\Siemens\Automation\Portal V20\PublicAPI\V20</TiaPublicApi>
+    <TiaPublicApi Condition="'$(TiaPublicApi)' == ''">C:\Program Files\Siemens\Automation\Portal V21\PublicAPI\V21\net48</TiaPublicApi>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Siemens.Engineering">
+    <!-- V21：Base + Step7（含 CaxProvider） -->
+    <Reference Include="Siemens.Engineering.Base" Condition="Exists('$(TiaPublicApi)\Siemens.Engineering.Base.dll')">
+      <HintPath>$(TiaPublicApi)\Siemens.Engineering.Base.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Siemens.Engineering.Step7" Condition="Exists('$(TiaPublicApi)\Siemens.Engineering.Step7.dll')">
+      <HintPath>$(TiaPublicApi)\Siemens.Engineering.Step7.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- V20：单体 Siemens.Engineering.dll -->
+    <Reference Include="Siemens.Engineering" Condition="Exists('$(TiaPublicApi)\Siemens.Engineering.dll')">
       <HintPath>$(TiaPublicApi)\Siemens.Engineering.dll</HintPath>
       <Private>false</Private>
     </Reference>
@@ -20,4 +33,9 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+  <Target Name="EnsureTiaApi" BeforeTargets="ResolveAssemblyReferences">
+    <Error
+      Condition="!Exists('$(TiaPublicApi)\Siemens.Engineering.Base.dll') and !Exists('$(TiaPublicApi)\Siemens.Engineering.dll')"
+      Text="未找到 TIA Openness DLL。请设置 TIA_PUBLICAPI（V21 示例：...\Portal V21\PublicAPI\V21\net48）。当前: $(TiaPublicApi)" />
+  </Target>
 </Project>

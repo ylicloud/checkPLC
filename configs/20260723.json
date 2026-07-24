@@ -1,0 +1,703 @@
+{
+  "name": "张东乌兹",
+  "plc": {
+    "ip": "192.168.100.1",
+    "rack": 0,
+    "slot": 1,
+    "db_config": 10,
+    "db_runtime": 11,
+    "poll_ms": 50
+  },
+  "di": [
+    {
+      "slot": 1,
+      "enable": true,
+      "start_addr": 0,
+      "channel_count": 32,
+      "name": "di101"
+    },
+    {
+      "slot": 2,
+      "enable": true,
+      "start_addr": 120,
+      "channel_count": 32,
+      "name": "di102"
+    },
+    {
+      "slot": 3,
+      "enable": true,
+      "start_addr": 124,
+      "channel_count": 32,
+      "name": "di103"
+    },
+    {
+      "slot": 4,
+      "enable": true,
+      "start_addr": 224,
+      "channel_count": 32,
+      "name": "di104"
+    },
+    {
+      "slot": 5,
+      "enable": true,
+      "start_addr": 228,
+      "channel_count": 32,
+      "name": "di105"
+    },
+    {
+      "slot": 6,
+      "enable": true,
+      "start_addr": 232,
+      "channel_count": 32,
+      "name": "di106"
+    },
+    {
+      "slot": 7,
+      "enable": true,
+      "start_addr": 4,
+      "channel_count": 32,
+      "name": "di201"
+    },
+    {
+      "slot": 8,
+      "enable": true,
+      "start_addr": 236,
+      "channel_count": 32,
+      "name": "di202"
+    },
+    {
+      "slot": 9,
+      "enable": true,
+      "start_addr": 240,
+      "channel_count": 32,
+      "name": "di203"
+    },
+    {
+      "slot": 10,
+      "enable": true,
+      "start_addr": 244,
+      "channel_count": 32,
+      "name": "di204"
+    },
+    {
+      "slot": 11,
+      "enable": true,
+      "start_addr": 280,
+      "channel_count": 32,
+      "name": "di301"
+    },
+    {
+      "slot": 12,
+      "enable": true,
+      "start_addr": 284,
+      "channel_count": 32,
+      "name": "di302"
+    },
+    {
+      "slot": 13,
+      "enable": true,
+      "start_addr": 288,
+      "channel_count": 32,
+      "name": "di303"
+    },
+    {
+      "slot": 14,
+      "enable": true,
+      "start_addr": 292,
+      "channel_count": 32,
+      "name": "di304"
+    },
+    {
+      "slot": 15,
+      "enable": true,
+      "start_addr": 296,
+      "channel_count": 32,
+      "name": "di305"
+    },
+    {
+      "slot": 16,
+      "enable": true,
+      "start_addr": 300,
+      "channel_count": 32,
+      "name": "di306"
+    },
+    {
+      "slot": 17,
+      "enable": true,
+      "start_addr": 304,
+      "channel_count": 32,
+      "name": "di307"
+    },
+    {
+      "slot": 18,
+      "enable": true,
+      "start_addr": 308,
+      "channel_count": 32,
+      "name": "di308"
+    },
+    {
+      "slot": 19,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 20,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    }
+  ],
+  "dq": [
+    {
+      "slot": 1,
+      "enable": true,
+      "start_addr": 0,
+      "channel_count": 32,
+      "name": "dq101"
+    },
+    {
+      "slot": 2,
+      "enable": true,
+      "start_addr": 4,
+      "channel_count": 32,
+      "name": "dq102"
+    },
+    {
+      "slot": 3,
+      "enable": true,
+      "start_addr": 8,
+      "channel_count": 32,
+      "name": "dq103"
+    },
+    {
+      "slot": 4,
+      "enable": true,
+      "start_addr": 76,
+      "channel_count": 32,
+      "name": "dq104"
+    },
+    {
+      "slot": 5,
+      "enable": true,
+      "start_addr": 80,
+      "channel_count": 32,
+      "name": "dq201"
+    },
+    {
+      "slot": 6,
+      "enable": true,
+      "start_addr": 84,
+      "channel_count": 32,
+      "name": "dq202"
+    },
+    {
+      "slot": 7,
+      "enable": true,
+      "start_addr": 88,
+      "channel_count": 32,
+      "name": "dq301"
+    },
+    {
+      "slot": 8,
+      "enable": true,
+      "start_addr": 92,
+      "channel_count": 32,
+      "name": "dq302"
+    },
+    {
+      "slot": 9,
+      "enable": true,
+      "start_addr": 96,
+      "channel_count": 32,
+      "name": "dq303"
+    },
+    {
+      "slot": 10,
+      "enable": true,
+      "start_addr": 100,
+      "channel_count": 32,
+      "name": "dq304"
+    },
+    {
+      "slot": 11,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 12,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 13,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 14,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 15,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 16,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 17,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 18,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 19,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 20,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    }
+  ],
+  "ai": [
+    {
+      "slot": 1,
+      "enable": true,
+      "start_addr": 128,
+      "channel_count": 8,
+      "name": "ai101",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 2,
+      "enable": true,
+      "start_addr": 144,
+      "channel_count": 8,
+      "name": "ai102",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 3,
+      "enable": true,
+      "start_addr": 8,
+      "channel_count": 8,
+      "name": "ai201",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 4,
+      "enable": true,
+      "start_addr": 24,
+      "channel_count": 8,
+      "name": "ai202",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 5,
+      "enable": true,
+      "start_addr": 40,
+      "channel_count": 8,
+      "name": "ai203",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 6,
+      "enable": true,
+      "start_addr": 56,
+      "channel_count": 8,
+      "name": "ai204",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 7,
+      "enable": true,
+      "start_addr": 72,
+      "channel_count": 8,
+      "name": "ai205",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 8,
+      "enable": true,
+      "start_addr": 88,
+      "channel_count": 8,
+      "name": "ai206",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 9,
+      "enable": true,
+      "start_addr": 104,
+      "channel_count": 8,
+      "name": "ai207",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 10,
+      "enable": true,
+      "start_addr": 248,
+      "channel_count": 8,
+      "name": "ai208",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 11,
+      "enable": true,
+      "start_addr": 264,
+      "channel_count": 8,
+      "name": "ai209",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 12,
+      "enable": true,
+      "start_addr": 312,
+      "channel_count": 8,
+      "name": "ai301",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 13,
+      "enable": true,
+      "start_addr": 328,
+      "channel_count": 8,
+      "name": "ai302",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 14,
+      "enable": true,
+      "start_addr": 344,
+      "channel_count": 8,
+      "name": "di303",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 15,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 16,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 17,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 18,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 19,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 20,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    }
+  ],
+  "aq": [
+    {
+      "slot": 1,
+      "enable": true,
+      "start_addr": 12,
+      "channel_count": 8,
+      "name": "aq101",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 2,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 3,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 4,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 5,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 6,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 7,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 8,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 9,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 10,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 11,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 12,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 13,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 14,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 15,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 16,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 17,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 18,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 19,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    },
+    {
+      "slot": 20,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 4,
+      "name": "",
+      "raw_full": 27648,
+      "eng_full_ma": 20,
+      "eng_min_ma": 4
+    }
+  ],
+  "ai_announce_threshold_ma": 0.5,
+  "ai_announce_threshold_pct": 10,
+  "ai_announce_cooldown_ms": 1000,
+  "ai_settle_ms": 300
+}
