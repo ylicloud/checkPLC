@@ -356,6 +356,13 @@ def guess_ip(root: ET.Element) -> Optional[str]:
     return None
 
 
+def with_kind_index(seq: int, raw: str) -> str:
+    """Prefix 1. 2. 3. … so identical catalog names stay distinguishable."""
+    raw = (raw or "").strip()
+    raw = re.sub(r"^\d+\.", "", raw).strip()
+    return f"{seq}.{raw}" if raw else str(seq)
+
+
 def modules_to_cabinet(
     modules: list[dict[str, Any]],
     name: str,
@@ -364,16 +371,19 @@ def modules_to_cabinet(
     by_kind: dict[str, list[dict[str, Any]]] = defaultdict(list)
     # stable order by start address then name
     modules_sorted = sorted(modules, key=lambda m: (m["kind"], m["start_addr"], m["name"]))
+    kind_seq: dict[str, int] = defaultdict(int)
     for m in modules_sorted:
         kind = m["kind"]
+        kind_seq[kind] += 1
+        labeled = with_kind_index(kind_seq[kind], m.get("name") or "")
         ch = channel_count_from(kind, int(m.get("length") or 0), m.get("channels") or set(), m.get("name") or "")
         # clamp sensible ranges
         if kind in {"di", "dq"}:
             ch = max(1, min(ch, 32))
-            item = empty_dig_slot(0, True, int(m["start_addr"]), ch, m.get("name") or "")
+            item = empty_dig_slot(0, True, int(m["start_addr"]), ch, labeled)
         else:
             ch = max(1, min(ch, 8))
-            item = empty_ana_slot(0, True, int(m["start_addr"]), ch, m.get("name") or "")
+            item = empty_ana_slot(0, True, int(m["start_addr"]), ch, labeled)
         by_kind[kind].append(item)
 
     cab = {

@@ -31,6 +31,16 @@ class SaveConfigRequest(BaseModel):
     persist: bool = True  # False=只下发内存/PLC，不改写 configs/*.json
 
 
+class PortalExportRequest(BaseModel):
+    name: str
+    ip: str = ""
+    device: str = ""
+    rack: int = 0
+    slot: int = 1
+    db_config: int = 810
+    db_runtime: int = 811
+
+
 class MockDiRequest(BaseModel):
     start_addr: int
     bit: int = Field(ge=0, le=7)

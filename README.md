@@ -34,12 +34,6 @@
 任选一种：
 
 - 把整个 `checkPLC` 文件夹拷到笔记本（例如 `D:\checkPLC`），**不要只拷里面某几个文件**。
-- 或已安装 Git 时：
-
-```powershell
-git clone git@github.com:ylicloud/checkPLC.git
-cd checkPLC
-```
 
 后面步骤都在**项目根目录**执行（能看到 `setup.bat`、`run.bat` 的那一层）。
 
@@ -136,7 +130,7 @@ cd D:\checkPLC
 
 下次测同类型柜子：加载已有配置，通常只改连接页的 IP。点 **刷新列表** 可重新扫描 `configs` 目录。
 
-没有现成 JSON 时：可从空白槽位手工填，或在工程机上从 Portal 导出（见后文）。
+没有现成 JSON 时：可从空白槽位手工填，或在本页点 **从已打开的 Portal 导出**（须先打开 TIA 工程）。
 
 ### 3. DI（数字量输入）
 
@@ -232,12 +226,21 @@ Mock：点 **模拟通道1 ≈5mA**。
 
 免去在配置页手工抄地址。这是**工程机**上的步骤；质检笔记本只需拿到生成的 `configs/柜名.json`。
 
-自动导出支持 **TIA Portal V20 和 V21**（不是只支持 V21，也不支持未升级的 V15～V19 工程直接读）。
+自动导出支持 **TIA Portal V20 和 V21**。
 
-**推荐做法：先在 Portal 里打开目标工程（PLC 离线），再跑导出。**  
-工具会附加到**正在运行的 TIA**，读取当前已打开的工程，**不必把工程文件夹路径交给它**。同一 Portal 请只开目标工程（它取第一个已打开工程）。
+**推荐：配置页按钮（不用命令行）**
 
-工程机前置：TIA V20 或 V21（含 Openness）；当前 Windows 用户加入组 **Siemens TIA Openness** 后重新登录；安装 [.NET SDK](https://dotnet.microsoft.com/download)。
+1. 用 TIA Portal 打开目标工程，PLC **离线**（同一 Portal 只开这一份工程）。
+2. 本机启动 checkPLC（`run.bat`），打开 **配置** 页。
+3. 把「配置名」改成柜子名字（不要用 `example_cabinet`）；连接页填好 PLC IP。
+4. 点 **从已打开的 Portal 导出**。工具会附加正在运行的 TIA，生成 `configs/配置名.json` 并自动加载。
+5. 对照下方「IO 地址一览」与 TIA 设备视图，确认后点 **保存并下发**。
+
+工程机前置：TIA V20 或 V21（含 Openness）；当前 Windows 用户加入组 **Siemens TIA Openness** 后重新登录。**不必**用管理员运行 `run.bat` / PowerShell，但必须与打开 Portal 的是**同一个 Windows 账户**（一个普通用户、一个管理员时附加会失败）。首次导出若尚未编译过工具，需安装 [.NET SDK](https://dotnet.microsoft.com/download)，可能多等 1～3 分钟。
+
+站名可空（空=导出整个工程）。只导出某一站时，在「站名」里填设备名，例如 `S7-1200 station`。
+
+**命令行备选**（与按钮相同流程）：
 
 ```bat
 REM 1) 已在 Portal 中打开工程，PLC 离线
@@ -248,8 +251,6 @@ REM 2) 转成 Web 配置（在项目根目录）
 cd ..\..
 python scripts\aml_to_cabinet.py D:\Temp\柜A.aml -o configs\柜A.json --name 柜A --ip 192.168.0.1
 ```
-
-成功时命令行会出现「附加到已运行的 TIA Portal」。然后在 Web **配置**页加载 `柜A`。
 
 Portal 没开时的备选（较慢）：指定 `.ap20` / `.ap21` **文件**（不是文件夹），并加 `--new`：
 
@@ -272,7 +273,7 @@ python scripts\aml_to_cabinet.py tools\tia-openness-export\samples\demo_cabinet.
 ## 通检全流程（对照）
 
 ```
-TIA 组态硬件 →（可选）打开工程后 export.bat → aml_to_cabinet 生成 JSON
+TIA 组态硬件 →（可选）配置页「从已打开的 Portal 导出」生成 JSON
        ↓
 导入通检程序 → 允许 PUT/GET → 下载到 CPU
        ↓

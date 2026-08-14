@@ -908,6 +908,75 @@ if ($("btnRefreshCfg")) {
   };
 }
 
+if ($("btnPortalExport")) {
+  $("btnPortalExport").onclick = async () => {
+    const name = sanitizeConfigName($("cfgName").value);
+    $("cfgName").value = name;
+    if (!name) {
+      alert("请先填写配置名（例如 用户A_标准柜）");
+      $("cfgName").focus();
+      return;
+    }
+    if (name === "example_cabinet") {
+      alert("请把配置名改成这台柜子的名字，不要覆盖示例 example_cabinet");
+      $("cfgName").focus();
+      return;
+    }
+    const items = getCfgListItems();
+    if (items.includes(name) && !confirm(`配置「${name}」已存在，导出将覆盖该文件。继续？`)) {
+      return;
+    }
+
+    const btn = $("btnPortalExport");
+    const msg = $("portalExportMsg");
+    btn.disabled = true;
+    if (msg) {
+      msg.textContent = "正在附加已打开的 Portal 并导出，请稍候（首次可能需编译 1～3 分钟）…";
+      msg.className = "msg";
+    }
+    try {
+      const r = await api("/api/portal/export", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          ip: ($("plcIp") && $("plcIp").value.trim()) || "",
+          device: ($("portalDevice") && $("portalDevice").value.trim()) || "",
+          rack: Number($("plcRack") && $("plcRack").value) || 0,
+          slot: Number($("plcSlot") && $("plcSlot").value) || 1,
+          db_config: Number($("dbConfig") && $("dbConfig").value) || 810,
+          db_runtime: Number($("dbRuntime") && $("dbRuntime").value) || 811,
+        }),
+      });
+      await refreshConfigList(r.name || name);
+      await loadCabinet(r.name || name);
+      const en = r.enabled || {};
+      const summary = ["di", "dq", "ai", "aq"]
+        .map((k) => `${k.toUpperCase()}:${en[k] || 0}`)
+        .join(" ");
+      const proj = r.project ? `\n工程: ${r.project}` : "";
+      const text =
+        `已从 Portal 导出并加载「${r.name}」\n` +
+        `模块 ${r.modules || 0} 个 · ${summary}\n` +
+        `IP ${r.ip || ""}` +
+        proj +
+        `\n请对照下方地址一览，确认后点「保存并下发」。`;
+      if (msg) {
+        msg.textContent = text.replace(/\n/g, " · ");
+        msg.className = "msg ok";
+      }
+      alert(text);
+    } catch (e) {
+      if (msg) {
+        msg.textContent = e.message;
+        msg.className = "msg";
+      }
+      alert(e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  };
+}
+
 $("btnSaveCfg").onclick = async () => {
   collectSlotsFromDom();
   collectPlcIntoCabinet();

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta http-equiv="Cache-Control" content="no-store" />
   <title>PLC IO 通检 Portal</title>
-  <link rel="stylesheet" href="/static/css/app.css?v=20260724c" />
+  <link rel="stylesheet" href="/static/css/app.css?v=20260814a" />
 </head>
 <body>
   <header class="top">
@@ -57,6 +57,16 @@
         <label>配置名 <input id="cfgName" value="example_cabinet" /></label>
         <button id="btnLoadCfg">加载</button>
         <button class="primary" id="btnSaveCfg">保存并下发</button>
+      </div>
+      <div class="export-box">
+        <h2 class="sub-title">从已打开的 Portal 导出地址</h2>
+        <p class="hint">请先在本机用 TIA Portal <b>打开目标工程</b>，PLC <b>离线</b>。点按钮后会附加当前 Portal，把模块起始地址写成上面的配置名，并自动加载。不必使用命令行。<br>
+        <b>不需要</b>管理员运行 <code>run.bat</code>。需要：当前 Windows 用户加入组 <b>Siemens TIA Openness</b> 后重新登录，并用<strong>同一个账户</strong>打开 Portal（不要一个普通用户、一个管理员）。</p>
+        <div class="row">
+          <label>站名（可空，空=整工程）<input id="portalDevice" placeholder="例如 S7-1200 station" /></label>
+          <button type="button" class="primary" id="btnPortalExport">从已打开的 Portal 导出</button>
+        </div>
+        <p class="msg" id="portalExportMsg"></p>
       </div>
       <div class="cfg-list-wrap">
         <div class="cfg-list-head">
@@ -180,6 +190,8 @@
             <li>界面按 连接 / 配置 / DI / AI / DQ / AQ 逐页说明</li>
             <li>Portal 导出：附加已打开工程；支持 V20 / V21</li>
             <li>真机须勾选 PUT/GET；通检 DB 改为 810/811；不再提供 Main.xml（在对方 OB1 里调用 FC）</li>
+            <li>配置页增加「从已打开的 Portal 导出」按钮，不必再敲两条命令行</li>
+            <li>导出模块名加序号（1.DI16、2.DI16）；无需管理员，须加入 Openness 组且与 Portal 同一账户</li>
           </ul>
           <h3>2026-07-23</h3>
           <ul>
@@ -225,12 +237,19 @@
         </div>
 
         <div class="help-pane" data-help-pane="portal">
+          <h3>推荐：配置页按钮</h3>
+          <ol>
+            <li>用 TIA Portal 打开工程，PLC <b>离线</b></li>
+            <li>Web「配置」页填写配置名（柜子名）和连接页 IP</li>
+            <li>点 <b>从已打开的 Portal 导出</b>，自动生成并加载 <code>configs/配置名.json</code></li>
+            <li>对照地址一览后点「保存并下发」</li>
+          </ol>
+          <p class="hint">同一 Portal 请只开目标工程。首次导出可能编译 1～3 分钟。需加入 Windows 组 <b>Siemens TIA Openness</b> 后重新登录；<b>不要</b>用管理员运行 Web，须与 Portal 同一账户。</p>
           <h3>做什么</h3>
           <p>从 TIA Portal 工程<strong>自动读取模块组态</strong>（起始地址、点数等），生成 Web「配置」页可用的 <code>configs/柜名.json</code>，免手工抄地址。</p>
-          <pre>TIA V20（PLC 离线）
-  → export.bat 导出 .aml
-  → aml_to_cabinet.py 转成 configs/*.json
-  → Web「配置」页加载柜名</pre>
+          <pre>已打开的 TIA V20/V21（PLC 离线）
+  → 配置页「从已打开的 Portal 导出」
+  → configs/*.json 并自动加载</pre>
 
           <h3>涉及脚本 / 工具</h3>
           <table class="help-table">
@@ -251,7 +270,7 @@
 
           <h3>前置条件（工程机）</h3>
           <ol>
-            <li>安装 <b>TIA Portal V20</b>（含 Openness）</li>
+            <li>安装 <b>TIA Portal V20 或 V21</b>（含 Openness）</li>
             <li>Windows 用户加入组 <b>Siemens TIA Openness</b> 后重新登录</li>
             <li>安装 <b>.NET SDK</b>（编译导出工具）</li>
             <li>确认存在：<br><code>C:\Program Files\Siemens\Automation\Portal V20\PublicAPI\V20\Siemens.Engineering.dll</code><br>路径不同时设环境变量 <code>TIA_PUBLICAPI</code></li>
@@ -338,7 +357,7 @@ python scripts/generate_wavs.py</pre>
     </div>
   </div>
 
-  <script src="/static/js/voice.js?v=20260724c"></script>
-  <script src="/static/js/app.js?v=20260724c"></script>
+  <script src="/static/js/voice.js?v=20260814a"></script>
+  <script src="/static/js/app.js?v=20260814a"></script>
 </body>
 </html>

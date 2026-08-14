@@ -65,6 +65,7 @@ main { padding: 1.25rem; max-width: 1100px; margin: 0 auto; }
 .page.active { display: block; }
 h1 { font-size: 1.35rem; margin: 0 0 0.75rem; }
 .hint, .hero-sub, .msg { color: var(--muted); }
+.msg.ok { color: var(--ok); }
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -81,6 +82,20 @@ input, select {
   padding: 0.5rem 0.65rem;
 }
 .row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; margin: 0.75rem 0; }
+
+.export-box {
+  margin: 1rem 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: rgba(36, 52, 71, 0.45);
+}
+.export-box .sub-title { margin-top: 0; }
+.export-box label { min-width: 16rem; }
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
 .cfg-list-wrap {
   margin: 0.5rem 0 1rem;

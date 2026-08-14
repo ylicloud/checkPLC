@@ -14,8 +14,10 @@ from .models import (
     DqSetRequest,
     MockAiRequest,
     MockDiRequest,
+    PortalExportRequest,
     SaveConfigRequest,
 )
+from .portal_export import export_open_portal
 from .s7_client import HAS_SNAP7, bridge
 from .scanner import scanner
 
@@ -118,6 +120,34 @@ def save_config(body: SaveConfigRequest) -> dict:
         "enabled": enabled,
         "path": str(config_store.config_path(safe)),
     }
+
+
+@app.post("/api/portal/export")
+def portal_export(body: PortalExportRequest) -> dict:
+    """附加已打开的 TIA Portal，导出硬件地址并写成柜配置 JSON。"""
+    try:
+        result = export_open_portal(
+            name=body.name,
+            ip=body.ip,
+            device=body.device,
+            rack=body.rack,
+            slot=body.slot,
+            db_config=body.db_config,
+            db_runtime=body.db_runtime,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("portal export failed")
+        raise HTTPException(400, f"从 Portal 导出失败: {exc}") from exc
+
+    scanner.set_cabinet(result.get("cabinet") or config_store.load_config(result["name"]))
+    if not result.get("cabinet"):
+        result["cabinet"] = config_store.load_config(result["name"])
+        result["enabled"] = config_store.enabled_counts(result["cabinet"])
+    return result
 
 
 @app.post("/api/connect")
