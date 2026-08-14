@@ -959,6 +959,7 @@ if ($("btnPortalExport")) {
         `模块 ${r.modules || 0} 个 · ${summary}\n` +
         `IP ${r.ip || ""}` +
         proj +
+        (r.cax_warning ? `\n注意: ${r.cax_warning}` : "") +
         `\n请对照下方地址一览，确认后点「保存并下发」。`;
       if (msg) {
         msg.textContent = text.replace(/\n/g, " · ");

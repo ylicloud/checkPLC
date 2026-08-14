@@ -55,12 +55,18 @@ namespace CheckPlc.TiaExport
 
                 Console.WriteLine("结果: " + result.State + "  errors=" + result.ErrorCount + "  warnings=" + result.WarningCount);
                 PrintMessages(result.Messages, 0);
+                amlFile.Refresh();
+                bool wrote = amlFile.Exists && amlFile.Length > 32;
+                if (wrote)
+                {
+                    Console.WriteLine("已写出: " + amlFile.FullName);
+                    if (result.ErrorCount > 0)
+                        Console.WriteLine("CAx 报告了错误，但 AML 已生成（CM/PZD 等非 IO 设备常导致 1 个错误，IO 地址通常仍可用）。");
+                    Console.WriteLine("下一步: python scripts/aml_to_cabinet.py \"" + amlFile.FullName + "\" -o configs\\柜名.json");
+                    return 0;
+                }
                 if (result.ErrorCount > 0)
                     return 5;
-
-                Console.WriteLine("已写出: " + amlFile.FullName);
-                Console.WriteLine("下一步: python scripts/aml_to_cabinet.py \"" + amlFile.FullName + "\" -o configs\\柜名.json");
-                return 0;
             }
             catch (Exception ex)
             {

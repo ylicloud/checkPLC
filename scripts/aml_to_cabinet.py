@@ -115,68 +115,147 @@ def parse_int(s: str, default: int = 0) -> int:
         return int(m.group(0)) if m else default
 
 
+# CPU 高速计数/脉冲、驱动 PZD、通信模块等不是柜体检的 DI/DQ/AI/AQ
+_SKIP_MODULE = re.compile(
+    r"(?ix)"
+    r"(^HSC(_|\d|$))"
+    r"|(^Pulse(_|\d|$))"
+    r"|(\bPTO\b)"
+    r"|(PZD)"
+    r"|(任意报文)"
+    r"|(Free\s*telegram)"
+    r"|(^CM\s*\d)"
+    r"|(\bCM\s*12)"
+    r"|(PosInput)"
+    r"|(^TM\s)"
+    r"|(PROFINET)"
+    r"|(OPC\s*UA)"
+)
+
+_KIND_FROM_CH = {
+    "DI": "di",
+    "DO": "dq",
+    "DQ": "dq",
+    "AI": "ai",
+    "AQ": "aq",
+    "AO": "aq",
+}
+
+
+def skip_module(name: str) -> bool:
+    n = (name or "").strip()
+    if not n or n.startswith("System:"):
+        return True
+    return _SKIP_MODULE.search(n) is not None
+
+
+def _has_di(n: str) -> bool:
+    return bool(re.search(r"(?<![A-Z])DI(?:\d+|\s+\d+|\b)", n))
+
+
+def _has_dq(n: str) -> bool:
+    return bool(re.search(r"(?<![A-Z])(?:DQ|DO)(?:\d+|\s+\d+|\b)", n))
+
+
+def _has_ai(n: str) -> bool:
+    return bool(re.search(r"(?<![A-Z])AI(?:\d+|\s+\d+|\b)|ANALOG.?IN", n))
+
+
+def _has_aq(n: str) -> bool:
+    return bool(re.search(r"(?<![A-Z])(?:AQ|AO)(?:\d+|\s+\d+|\b)|ANALOG.?OUT", n))
+
+
+def _io_is_output(io: str) -> bool:
+    return "out" in io
+
+
+def _io_is_input(io: str) -> bool:
+    return "in" in io and "out" not in io
+
+
 def classify(io_type: str, signal_type: str, length: int, name: str) -> Optional[str]:
+    if skip_module(name):
+        return None
     io = (io_type or "").lower()
     sig = (signal_type or "").lower()
     n = (name or "").upper()
 
-    # Prefer explicit channel type
+    # 集成 DI/DQ、AI/AQ：必须按 IoType 拆成两条，不能只看名字里先出现的 DQ/AQ
+    if _has_di(n) and _has_dq(n):
+        if _io_is_output(io):
+            return "dq"
+        if _io_is_input(io):
+            return "di"
+        return None
+    if _has_ai(n) and _has_aq(n):
+        if _io_is_output(io):
+            return "aq"
+        if _io_is_input(io):
+            return "ai"
+        return None
+
     if "analog" in sig or sig in {"ai", "ao", "aq"}:
-        if "out" in io or "output" in io or "aq" in sig or "ao" in sig:
+        if _io_is_output(io) or "aq" in sig or "ao" in sig:
             return "aq"
         return "ai"
     if "digital" in sig or sig in {"di", "do", "dq"}:
-        if "out" in io or "output" in io or "dq" in sig or "do" in sig:
+        if _io_is_output(io) or "dq" in sig or "do" in sig:
             return "dq"
         return "di"
 
-    # Heuristic from module name
-    if re.search(r"\bAQ\b|ANALOG.?OUT|AO\b", n):
+    if _has_aq(n):
         return "aq"
-    if re.search(r"\bAI\b|ANALOG.?IN", n):
+    if _has_ai(n):
         return "ai"
-    if re.search(r"\bDQ\b|DO\b|DIGITAL.?OUT", n):
+    if _has_dq(n):
         return "dq"
-    if re.search(r"\bDI\b|DIGITAL.?IN", n):
+    if _has_di(n):
         return "di"
-    if "DI" in n and "DQ" in n:
-        # integrated — caller splits by IoType
-        if "out" in io or "output" in io:
-            return "dq"
-        if "in" in io or "input" in io:
-            return "di"
 
-    # Length heuristic: analog channels often 16 bits per channel in AML docs
-    if "out" in io or "output" in io:
-        return "aq" if length >= 16 and length % 16 == 0 and length <= 128 else "dq"
-    if "in" in io or "input" in io:
-        return "ai" if length >= 16 and length % 16 == 0 and length <= 128 else "di"
+    # 无名模块：按方向归入数字量，避免把 DI16 的 Length=16 误判成 AI
+    if _io_is_output(io):
+        return "dq"
+    if _io_is_input(io):
+        return "di"
     return None
+
+
+def _channels_from_name(kind: str, name: str) -> int:
+    n = (name or "").upper()
+    if kind == "di":
+        pat = r"(?<![A-Z])DI\s*(\d+)"
+    elif kind == "dq":
+        pat = r"(?<![A-Z])(?:DQ|DO)\s*(\d+)"
+    elif kind == "ai":
+        pat = r"(?<![A-Z])AI\s*(\d+)"
+    else:
+        pat = r"(?<![A-Z])(?:AQ|AO)\s*(\d+)"
+    m = re.search(pat, n)
+    return int(m.group(1)) if m else 0
 
 
 def channel_count_from(kind: str, length: int, channel_nums: set[int], name: str) -> int:
     from_ch = (max(channel_nums) + 1) if channel_nums else 0
-    n = (name or "").upper()
-    m = re.search(r"(?:DI|DQ|DO|AI|AQ|AO)\s*(\d+)", n)
-    from_name = int(m.group(1)) if m else 0
+    from_name = _channels_from_name(kind, name)
 
     if kind in {"ai", "aq"}:
-        # 模拟量：优先通道跨度；否则 Length/16；再否则模块名中的点数
         if from_ch > 1:
             return max(1, min(from_ch, 8))
-        if length >= 16:
-            return max(1, min(length // 16, 8))
         if from_name:
             return max(1, min(from_name, 8))
+        if length >= 16:
+            return max(1, min(length // 16, 8))
         return ANA_DEFAULT_CH
 
-    # 数字量：AML Length 通常为总位数，优先于单个 Channel 样例
-    if length > 0:
-        return max(1, min(length, 32))
+    # 数字量：DI14 的 AML Length 常为 16（按字对齐），通道名/Channel_* 更准
+    if from_ch > 1:
+        return max(1, min(from_ch, 32))
     if from_name:
         return max(1, min(from_name, 32))
     if from_ch > 0:
         return max(1, min(from_ch, 32))
+    if length > 0:
+        return max(1, min(length, 32))
     return DIG_DEFAULT_CH
 
 
@@ -216,125 +295,133 @@ def pad_slots(kind: str, enabled: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-def extract_modules(root: ET.Element) -> list[dict[str, Any]]:
-    """Collect address records from AML."""
-    parents = build_parent_map(root)
-    # Group by (module_name, io_type, start) accumulating channels
-    buckets: dict[tuple[str, str, int], dict[str, Any]] = {}
-
-    for el, name in find_named_attrs(root):
-        # Look for Address blocks or StartAddress leaves
-        if name not in {"Address", "StartAddress", "IoType", "Channel"}:
+def iter_address_slots(addr_el: ET.Element) -> list[dict[str, str]]:
+    """V21 CAx: Address → Attribute '1'/'2' each with StartAddress/Length/IoType.
+    Older/demo: Address 直接挂 IoType/StartAddress/Length。"""
+    numbered: list[dict[str, str]] = []
+    flat: dict[str, str] = {}
+    for c in addr_el:
+        if local(c.tag).lower() not in {"attribute", "attr"}:
             continue
+        n = attr_name(c)
+        if n.isdigit():
+            inner: dict[str, str] = {}
+            for gc in c:
+                if local(gc.tag).lower() in {"attribute", "attr"}:
+                    gn = attr_name(gc)
+                    if gn:
+                        inner[gn] = text_of(gc)
+            numbered.append(inner)
+        elif n in {"StartAddress", "IoType", "Length", "Type"}:
+            flat[n] = text_of(c)
+    if numbered:
+        return numbered
+    if flat.get("StartAddress") not in (None, ""):
+        return [flat]
+    return []
 
-        # Climb to a container that holds Address children
-        node = el
-        # If this is StartAddress, go to parent Address if any
-        if name == "StartAddress":
-            p = parents.get(el)
-            if p is not None and attr_name(p) == "Address":
-                node = p
-            else:
-                # standalone StartAddress — build synthetic
-                io_type = ""
-                length = 0
-                start = parse_int(text_of(el), -1)
-                if start < 0:
-                    continue
-                mod = nearest_device_name(el, parents)
-                kind = classify(io_type, "", length, mod)
-                if not kind:
-                    continue
-                key = (mod, kind, start)
-                buckets.setdefault(
-                    key,
-                    {"name": mod, "kind": kind, "start_addr": start, "length": length, "channels": set()},
-                )
+
+def channels_from_module(mod_el: ET.Element) -> dict[str, set[int]]:
+    by_kind: dict[str, set[int]] = {"di": set(), "dq": set(), "ai": set(), "aq": set()}
+    mod_name = mod_el.get("Name") or mod_el.get("name") or ""
+    for c in mod_el:
+        ln = local(c.tag).lower()
+        name = c.get("Name") or c.get("name") or ""
+        if ln == "externalinterface":
+            m = re.match(r"Channel_(DI|DO|DQ|AI|AQ|AO)_(\d+)$", name, re.I)
+            if not m:
                 continue
+            kind = _KIND_FROM_CH.get(m.group(1).upper())
+            if kind:
+                by_kind[kind].add(int(m.group(2)))
+            continue
+        if ln in {"attribute", "attr"} and name == "Channel":
+            am = nested_attr_map(c)
+            kind = classify(am.get("IoType", ""), am.get("Type", ""), 0, mod_name)
+            if kind:
+                by_kind[kind].add(parse_int(am.get("Number", "0"), 0))
+    return by_kind
 
-        if name == "Channel":
-            # Channel under a device item — gather type/number; address may be sibling
-            ch_map = nested_attr_map(el)
-            ch_type = ch_map.get("Type", "")
-            ch_io = ch_map.get("IoType", "")
-            ch_num = parse_int(ch_map.get("Number", "0"), 0)
-            mod = nearest_device_name(el, parents)
-            # find sibling/parent Address
-            start = -1
-            length = 0
-            io_type = ch_io
-            cur = parents.get(el)
-            depth = 0
-            matched_addr: Optional[dict[str, str]] = None
-            while cur is not None and depth < 6:
-                for c in cur:
-                    if local(c.tag).lower() not in {"attribute", "attr"}:
-                        continue
-                    if attr_name(c) != "Address":
-                        continue
-                    am = nested_attr_map(c)
-                    for gc in c:
-                        if local(gc.tag).lower() in {"attribute", "attr"}:
-                            am[attr_name(gc)] = text_of(gc)
-                    addr_io = (am.get("IoType") or "").lower()
-                    ch_io_l = (ch_io or "").lower()
-                    # Prefer address with same IoType as channel
-                    if ch_io_l and addr_io and (
-                        ("out" in ch_io_l and "out" in addr_io)
-                        or ("in" in ch_io_l and "in" in addr_io and "out" not in addr_io)
-                    ):
-                        matched_addr = am
-                        break
-                    if matched_addr is None and am.get("StartAddress"):
-                        matched_addr = am
-                if matched_addr is not None:
+
+def nearest_station(el: ET.Element, parents: dict[ET.Element, ET.Element]) -> str:
+    cur: Optional[ET.Element] = el
+    while cur is not None:
+        if local(cur.tag).lower() == "internalelement":
+            name = cur.get("Name") or cur.get("name") or ""
+            tid = ""
+            for c in cur:
+                if local(c.tag).lower() in {"attribute", "attr"} and attr_name(c) == "TypeIdentifier":
+                    tid = text_of(c)
                     break
-                cur = parents.get(cur)
-                depth += 1
-            if matched_addr:
-                start = parse_int(matched_addr.get("StartAddress", "-1"), -1)
-                length = parse_int(matched_addr.get("Length", "0"), 0)
-                if not io_type:
-                    io_type = matched_addr.get("IoType", "")
-            if start < 0:
-                # channel-only; skip if no address (cannot place in process image)
+            if "station" in name.lower() or "Device." in tid:
+                return name
+        cur = parents.get(cur)
+    return ""
+
+
+def short_station(name: str) -> str:
+    m = re.search(r"station[_\s]?\d+", name or "", re.I)
+    return m.group(0) if m else (name or "")
+
+
+def _under_device(el: ET.Element, parents: dict[ET.Element, ET.Element], needle: str) -> bool:
+    cur: Optional[ET.Element] = el
+    while cur is not None:
+        n = (cur.get("Name") or cur.get("name") or "").lower()
+        if needle in n:
+            return True
+        cur = parents.get(cur)
+    return False
+
+
+def extract_modules(root: ET.Element, device: str = "") -> list[dict[str, Any]]:
+    """Collect one IO record per Address slot (combo DI/DQ 会拆成两条)."""
+    parents = build_parent_map(root)
+    device_l = (device or "").strip().lower()
+    buckets: dict[tuple[str, str, str, int], dict[str, Any]] = {}
+
+    for el in root.iter():
+        if local(el.tag).lower() != "internalelement":
+            continue
+        mod = el.get("Name") or el.get("name") or ""
+        if skip_module(mod):
+            continue
+        slots: list[dict[str, str]] = []
+        for c in el:
+            if local(c.tag).lower() not in {"attribute", "attr"}:
                 continue
-            kind = classify(io_type, ch_type, length, mod)
+            if attr_name(c) != "Address":
+                continue
+            slots.extend(iter_address_slots(c))
+        if not slots:
+            continue
+        if device_l and not _under_device(el, parents, device_l):
+            continue
+        station = nearest_station(el, parents)
+        ch_by_kind = channels_from_module(el)
+        for rec in slots:
+            start = parse_int(rec.get("StartAddress", "-1"), -1)
+            if start < 0:
+                continue
+            length = parse_int(rec.get("Length", "0"), 0)
+            io_type = rec.get("IoType", "")
+            kind = classify(io_type, rec.get("Type", ""), length, mod)
             if not kind:
                 continue
-            key = (mod, kind, start)
+            key = (station, mod, kind, start)
             b = buckets.setdefault(
                 key,
-                {"name": mod, "kind": kind, "start_addr": start, "length": length, "channels": set()},
-            )
-            b["channels"].add(ch_num)
-            # 不覆盖 Address 阶段已写入的正确 Length（集成 DI/DQ 易被通道侧误匹配）
-            if length and not b.get("length"):
-                b["length"] = length
-            continue
-
-        if name == "Address":
-            am = nested_attr_map(el)
-            # also read direct children
-            for c in el:
-                if local(c.tag).lower() in {"attribute", "attr"}:
-                    am[attr_name(c)] = text_of(c)
-            start = parse_int(am.get("StartAddress", "-1"), -1)
-            if start < 0:
-                continue
-            length = parse_int(am.get("Length", "0"), 0)
-            io_type = am.get("IoType", "")
-            mod = nearest_device_name(el, parents)
-            kind = classify(io_type, "", length, mod)
-            if not kind:
-                continue
-            key = (mod, kind, start)
-            buckets.setdefault(
-                key,
-                {"name": mod, "kind": kind, "start_addr": start, "length": length, "channels": set()},
+                {
+                    "name": mod,
+                    "station": station,
+                    "kind": kind,
+                    "start_addr": start,
+                    "length": length,
+                    "channels": set(ch_by_kind.get(kind) or ()),
+                },
             )
             if length:
-                buckets[key]["length"] = length
+                b["length"] = length
 
     return list(buckets.values())
 
@@ -372,10 +459,15 @@ def modules_to_cabinet(
     # stable order by start address then name
     modules_sorted = sorted(modules, key=lambda m: (m["kind"], m["start_addr"], m["name"]))
     kind_seq: dict[str, int] = defaultdict(int)
+    stations = {str(m.get("station") or "") for m in modules_sorted if m.get("station")}
+    multi_station = len(stations) > 1
     for m in modules_sorted:
         kind = m["kind"]
         kind_seq[kind] += 1
-        labeled = with_kind_index(kind_seq[kind], m.get("name") or "")
+        raw = m.get("name") or ""
+        if multi_station and m.get("station"):
+            raw = f"{short_station(str(m['station']))} / {raw}"
+        labeled = with_kind_index(kind_seq[kind], raw)
         ch = channel_count_from(kind, int(m.get("length") or 0), m.get("channels") or set(), m.get("name") or "")
         # clamp sensible ranges
         if kind in {"di", "dq"}:
@@ -385,6 +477,8 @@ def modules_to_cabinet(
             ch = max(1, min(ch, 8))
             item = empty_ana_slot(0, True, int(m["start_addr"]), ch, labeled)
         by_kind[kind].append(item)
+
+    truncated = {k: len(v) for k, v in by_kind.items() if len(v) > SLOTS}
 
     cab = {
         "name": name,
@@ -405,10 +499,13 @@ def modules_to_cabinet(
         "ai_settle_ms": 300,
         "_import": {
             "source": "tia_cax_aml",
+            "stations": sorted(stations),
+            "truncated": truncated,
             "modules_found": [
                 {
                     "kind": m["kind"],
                     "name": m.get("name"),
+                    "station": m.get("station"),
                     "start_addr": m["start_addr"],
                     "length": m.get("length"),
                     "channels": sorted(m.get("channels") or []),
@@ -458,8 +555,14 @@ def main() -> int:
     }
     print(f"解析模块 {len(modules)} 个 → 启用槽 DI:{summary['di']} DQ:{summary['dq']} AI:{summary['ai']} AQ:{summary['aq']}")
     print(f"PLC IP: {ip}")
+    truncated = cab.get("_import", {}).get("truncated") or {}
+    if truncated:
+        extra = " ".join(f"{k.upper()}共{n}个(已截到{SLOTS})" for k, n in truncated.items())
+        print(f"注意: 每类最多 {SLOTS} 槽，{extra}。可在导出时填写「站名」只导出当前 PLC。")
     for m in cab.get("_import", {}).get("modules_found", []):
-        print(f"  [{m['kind']}] {m['name']}  start={m['start_addr']}  len={m['length']}  ch={m['channels']}")
+        st = m.get("station") or ""
+        prefix = f"{st} " if st else ""
+        print(f"  [{m['kind']}] {prefix}{m['name']}  start={m['start_addr']}  len={m['length']}  ch={m['channels']}")
 
     if args.dry_run:
         return 0

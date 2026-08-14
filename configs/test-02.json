@@ -1,5 +1,5 @@
 {
-  "name": "测试",
+  "name": "test-02",
   "plc": {
     "ip": "192.168.100.10",
     "rack": 0,
@@ -11,31 +11,31 @@
   "di": [
     {
       "slot": 1,
-      "enable": false,
+      "enable": true,
       "start_addr": 0,
-      "channel_count": 16,
-      "name": ""
+      "channel_count": 14,
+      "name": "1.DI 14/DQ 10_1"
     },
     {
       "slot": 2,
-      "enable": false,
-      "start_addr": 0,
+      "enable": true,
+      "start_addr": 8,
       "channel_count": 16,
-      "name": ""
+      "name": "2.DI 16/DQ 16x24VDC_1"
     },
     {
       "slot": 3,
-      "enable": false,
-      "start_addr": 0,
+      "enable": true,
+      "start_addr": 10,
       "channel_count": 16,
-      "name": ""
+      "name": "3.DI 16/DQ 16x24VDC_2"
     },
     {
       "slot": 4,
-      "enable": false,
-      "start_addr": 0,
+      "enable": true,
+      "start_addr": 12,
       "channel_count": 16,
-      "name": ""
+      "name": "4.DI 16/DQ 16x24VDC_3"
     },
     {
       "slot": 5,
@@ -155,7 +155,7 @@
       "slot": 1,
       "enable": true,
       "start_addr": 0,
-      "channel_count": 16,
+      "channel_count": 10,
       "name": "1.DI 14/DQ 10_1"
     },
     {
@@ -306,9 +306,9 @@
     {
       "slot": 2,
       "enable": true,
-      "start_addr": 108,
+      "start_addr": 100,
       "channel_count": 4,
-      "name": "2.AI 4x13BIT_1",
+      "name": "2.AI 4x13BIT/AQ 2x14BIT_1",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
@@ -316,59 +316,59 @@
     {
       "slot": 3,
       "enable": true,
-      "start_addr": 1000,
-      "channel_count": 2,
-      "name": "3.HSC_1",
+      "start_addr": 108,
+      "channel_count": 4,
+      "name": "3.AI 4x13BIT_1",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
     },
     {
       "slot": 4,
-      "enable": true,
-      "start_addr": 1004,
-      "channel_count": 2,
-      "name": "4.HSC_2",
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
     },
     {
       "slot": 5,
-      "enable": true,
-      "start_addr": 1008,
-      "channel_count": 2,
-      "name": "5.HSC_3",
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
     },
     {
       "slot": 6,
-      "enable": true,
-      "start_addr": 1012,
-      "channel_count": 2,
-      "name": "6.HSC_4",
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
     },
     {
       "slot": 7,
-      "enable": true,
-      "start_addr": 1016,
-      "channel_count": 2,
-      "name": "7.HSC_5",
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
     },
     {
       "slot": 8,
-      "enable": true,
-      "start_addr": 1020,
-      "channel_count": 2,
-      "name": "8.HSC_6",
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
@@ -498,59 +498,59 @@
     {
       "slot": 1,
       "enable": true,
-      "start_addr": 64,
-      "channel_count": 6,
-      "name": "1.任意报文，PZD-6/6",
+      "start_addr": 100,
+      "channel_count": 2,
+      "name": "1.AI 4x13BIT/AQ 2x14BIT_1",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
     },
     {
       "slot": 2,
-      "enable": true,
-      "start_addr": 100,
-      "channel_count": 2,
-      "name": "2.AI 4x13BIT/AQ 2x14BIT_1",
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
     },
     {
       "slot": 3,
-      "enable": true,
-      "start_addr": 1000,
-      "channel_count": 1,
-      "name": "3.Pulse_1",
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
     },
     {
       "slot": 4,
-      "enable": true,
-      "start_addr": 1002,
-      "channel_count": 1,
-      "name": "4.Pulse_2",
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
     },
     {
       "slot": 5,
-      "enable": true,
-      "start_addr": 1004,
-      "channel_count": 1,
-      "name": "5.Pulse_3",
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
     },
     {
       "slot": 6,
-      "enable": true,
-      "start_addr": 1006,
-      "channel_count": 1,
-      "name": "6.Pulse_4",
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
       "raw_full": 27648,
       "eng_min_ma": 4,
       "eng_full_ma": 20
@@ -701,132 +701,250 @@
   "ai_settle_ms": 300,
   "_import": {
     "source": "tia_cax_aml",
+    "stations": [
+      "S7-1200 station_1"
+    ],
+    "truncated": {},
     "modules_found": [
       {
         "kind": "ai",
         "name": "AI 2_1",
+        "station": "S7-1200 station_1",
         "start_addr": 64,
         "length": 32,
-        "channels": []
+        "channels": [
+          0,
+          1
+        ]
+      },
+      {
+        "kind": "ai",
+        "name": "AI 4x13BIT/AQ 2x14BIT_1",
+        "station": "S7-1200 station_1",
+        "start_addr": 100,
+        "length": 64,
+        "channels": [
+          0,
+          1,
+          2,
+          3
+        ]
       },
       {
         "kind": "ai",
         "name": "AI 4x13BIT_1",
+        "station": "S7-1200 station_1",
         "start_addr": 108,
         "length": 64,
-        "channels": []
-      },
-      {
-        "kind": "ai",
-        "name": "HSC_1",
-        "start_addr": 1000,
-        "length": 32,
-        "channels": []
-      },
-      {
-        "kind": "ai",
-        "name": "HSC_2",
-        "start_addr": 1004,
-        "length": 32,
-        "channels": []
-      },
-      {
-        "kind": "ai",
-        "name": "HSC_3",
-        "start_addr": 1008,
-        "length": 32,
-        "channels": []
-      },
-      {
-        "kind": "ai",
-        "name": "HSC_4",
-        "start_addr": 1012,
-        "length": 32,
-        "channels": []
-      },
-      {
-        "kind": "ai",
-        "name": "HSC_5",
-        "start_addr": 1016,
-        "length": 32,
-        "channels": []
-      },
-      {
-        "kind": "ai",
-        "name": "HSC_6",
-        "start_addr": 1020,
-        "length": 32,
-        "channels": []
-      },
-      {
-        "kind": "aq",
-        "name": "任意报文，PZD-6/6",
-        "start_addr": 64,
-        "length": 96,
-        "channels": []
+        "channels": [
+          0,
+          1,
+          2,
+          3
+        ]
       },
       {
         "kind": "aq",
         "name": "AI 4x13BIT/AQ 2x14BIT_1",
+        "station": "S7-1200 station_1",
         "start_addr": 100,
         "length": 32,
-        "channels": []
+        "channels": [
+          0,
+          1
+        ]
       },
       {
-        "kind": "aq",
-        "name": "Pulse_1",
-        "start_addr": 1000,
+        "kind": "di",
+        "name": "DI 14/DQ 10_1",
+        "station": "S7-1200 station_1",
+        "start_addr": 0,
         "length": 16,
-        "channels": []
+        "channels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ]
       },
       {
-        "kind": "aq",
-        "name": "Pulse_2",
-        "start_addr": 1002,
+        "kind": "di",
+        "name": "DI 16/DQ 16x24VDC_1",
+        "station": "S7-1200 station_1",
+        "start_addr": 8,
         "length": 16,
-        "channels": []
+        "channels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
       },
       {
-        "kind": "aq",
-        "name": "Pulse_3",
-        "start_addr": 1004,
+        "kind": "di",
+        "name": "DI 16/DQ 16x24VDC_2",
+        "station": "S7-1200 station_1",
+        "start_addr": 10,
         "length": 16,
-        "channels": []
+        "channels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
       },
       {
-        "kind": "aq",
-        "name": "Pulse_4",
-        "start_addr": 1006,
+        "kind": "di",
+        "name": "DI 16/DQ 16x24VDC_3",
+        "station": "S7-1200 station_1",
+        "start_addr": 12,
         "length": 16,
-        "channels": []
+        "channels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
       },
       {
         "kind": "dq",
         "name": "DI 14/DQ 10_1",
+        "station": "S7-1200 station_1",
         "start_addr": 0,
         "length": 16,
-        "channels": []
+        "channels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
       },
       {
         "kind": "dq",
         "name": "DI 16/DQ 16x24VDC_1",
+        "station": "S7-1200 station_1",
         "start_addr": 8,
         "length": 16,
-        "channels": []
+        "channels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
       },
       {
         "kind": "dq",
         "name": "DI 16/DQ 16x24VDC_2",
+        "station": "S7-1200 station_1",
         "start_addr": 10,
         "length": 16,
-        "channels": []
+        "channels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
       },
       {
         "kind": "dq",
         "name": "DI 16/DQ 16x24VDC_3",
+        "station": "S7-1200 station_1",
         "start_addr": 12,
         "length": 16,
-        "channels": []
+        "channels": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
       }
     ]
   }

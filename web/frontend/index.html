@@ -63,7 +63,7 @@
         <p class="hint">请先在本机用 TIA Portal <b>打开目标工程</b>，PLC <b>离线</b>。点按钮后会附加当前 Portal，把模块起始地址写成上面的配置名，并自动加载。不必使用命令行。<br>
         <b>不需要</b>管理员运行 <code>run.bat</code>。需要：当前 Windows 用户加入组 <b>Siemens TIA Openness</b> 后重新登录，并用<strong>同一个账户</strong>打开 Portal（不要一个普通用户、一个管理员）。</p>
         <div class="row">
-          <label>站名（可空，空=整工程）<input id="portalDevice" placeholder="例如 S7-1200 station" /></label>
+          <label>站名（可空，空=整工程）<input id="portalDevice" placeholder="例如 S7-1200 station_1" /></label>
           <button type="button" class="primary" id="btnPortalExport">从已打开的 Portal 导出</button>
         </div>
         <p class="msg" id="portalExportMsg"></p>
@@ -358,6 +358,6 @@ python scripts/generate_wavs.py</pre>
   </div>
 
   <script src="/static/js/voice.js?v=20260814a"></script>
-  <script src="/static/js/app.js?v=20260814a"></script>
+  <script src="/static/js/app.js?v=20260814c"></script>
 </body>
 </html>

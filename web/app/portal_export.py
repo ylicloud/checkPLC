@@ -118,36 +118,38 @@ def _export_aml(aml_path: Path, device: str) -> str:
             raise RuntimeError(f"未找到导出工具: {bat}")
         code, log = _run(["cmd", "/c", str(bat), *args], TOOL_DIR, env, timeout=420)
 
-    if code != 0:
-        raise RuntimeError(_friendly_fail(log))
+    # CAx 对 CM/PZD 等非 IO 设备常报 1 个错误，但 AML 里 IO 地址往往已经写出
+    if aml_path.exists() and aml_path.stat().st_size >= 32:
+        if code != 0:
+            logger.warning("CAx exit=%s but AML exists (%s bytes), continue convert", code, aml_path.stat().st_size)
+        return log
 
-    if not aml_path.exists() or aml_path.stat().st_size < 32:
-        raise RuntimeError("导出结束但未生成 AML 文件。请确认 Portal 已打开工程，PLC 离线。")
-    return log
+    raise RuntimeError(_friendly_fail(log))
 
 
 def _friendly_fail(log: str) -> str:
-    low = (log or "").lower()
-    tail = "\n".join((log or "").splitlines()[-12:])
-    if "未找到已打开工程" in log:
+    attached = "附加到已运行的 TIA Portal" in (log or "") or "工程:" in (log or "")
+    tail = "\n".join((log or "").splitlines()[-16:])
+    if "未找到已打开工程" in (log or "") and not attached:
         return (
             "未找到已打开的 Portal 工程。\n"
             "请先用 TIA Portal 打开目标工程，确认 PLC 离线，再点导出。\n\n"
             + tail
         )
-    if "附加失败" in log or "opennes" in low:
+    if not attached and "附加失败" in (log or ""):
         return (
             "无法附加到 TIA Portal。\n"
             "请确认：当前 Windows 用户已加入组「Siemens TIA Openness」并重新登录；"
-            "本机已安装 TIA V20 或 V21（含 Openness）。\n\n"
+            "用同一个 Windows 账户打开 Portal 和本工具（不要管理员）。\n\n"
             + tail
         )
-    if "build failed" in low or "dotnet" in low:
+    low = (log or "").lower()
+    if "build failed" in low:
         return (
             "导出工具编译失败。首次使用需安装 .NET SDK，并确认 TIA PublicAPI 路径。\n\n"
             + tail
         )
-    if not log.strip():
+    if not (log or "").strip():
         return "导出失败（无输出）。请先打开 Portal 工程后重试。"
     return "从 Portal 导出失败：\n" + tail
 
@@ -182,7 +184,7 @@ def export_open_portal(
             raise RuntimeError(f"导出的 AML 无法解析: {exc}") from exc
 
         root = tree.getroot()
-        modules = aml_mod.extract_modules(root)
+        modules = aml_mod.extract_modules(root, device=device)
         if not modules:
             raise RuntimeError(
                 "未在导出结果中解析到带地址的 IO 模块。\n"
@@ -205,6 +207,25 @@ def export_open_portal(
             project = m.group(1).strip()
 
         enabled = config_store.enabled_counts(cab)
+        imp = cab.get("_import") or {}
+        truncated = imp.get("truncated") or {}
+        stations = imp.get("stations") or []
+        warnings: list[str] = []
+        if re.search(r"错误:\s*[1-9]", log) or re.search(r"errors=\s*[1-9]", log):
+            warnings.append(
+                "CAx 导出有错误（常见于 CM 通信模块、PZD 报文等非 IO 设备，"
+                "一般不影响 DI/DQ/AI/AQ 地址）。请对照 TIA 设备视图核对地址一览。"
+            )
+        if truncated:
+            detail = "、".join(f"{k.upper()} {n} 个" for k, n in truncated.items())
+            warnings.append(
+                f"解析到 {detail}，每类最多 20 槽已截断。请在「站名」填写当前 PLC/ET200 后再导出。"
+            )
+        elif len(stations) > 1:
+            warnings.append(
+                "工程含多个站：" + "、".join(stations) + "。若数量与当前柜子不符，请填写「站名」只导出该站。"
+            )
+        cax_warning = " ".join(warnings)
         return {
             "ok": True,
             "name": saved,
@@ -212,8 +233,11 @@ def export_open_portal(
             "project": project,
             "enabled": enabled,
             "modules": len(modules),
+            "stations": stations,
+            "truncated": truncated,
             "path": str(config_store.config_path(saved)),
             "cabinet": cab,
+            "cax_warning": cax_warning,
             "log_tail": "\n".join(log.splitlines()[-8:]),
         }
     finally:

@@ -1,0 +1,1022 @@
+{
+  "name": "test-01",
+  "plc": {
+    "ip": "192.168.100.10",
+    "rack": 0,
+    "slot": 1,
+    "db_config": 810,
+    "db_runtime": 811,
+    "poll_ms": 50
+  },
+  "di": [
+    {
+      "slot": 1,
+      "enable": true,
+      "start_addr": 0,
+      "channel_count": 32,
+      "name": "1.DI 32x24VDC BA_1"
+    },
+    {
+      "slot": 2,
+      "enable": true,
+      "start_addr": 4,
+      "channel_count": 32,
+      "name": "2.DI 32x24VDC BA_1"
+    },
+    {
+      "slot": 3,
+      "enable": true,
+      "start_addr": 120,
+      "channel_count": 32,
+      "name": "3.DI 32x24VDC BA_2"
+    },
+    {
+      "slot": 4,
+      "enable": true,
+      "start_addr": 124,
+      "channel_count": 32,
+      "name": "4.DI 32x24VDC BA_3"
+    },
+    {
+      "slot": 5,
+      "enable": true,
+      "start_addr": 224,
+      "channel_count": 32,
+      "name": "5.DI 32x24VDC BA_4"
+    },
+    {
+      "slot": 6,
+      "enable": true,
+      "start_addr": 228,
+      "channel_count": 32,
+      "name": "6.DI 32x24VDC BA_5"
+    },
+    {
+      "slot": 7,
+      "enable": true,
+      "start_addr": 232,
+      "channel_count": 32,
+      "name": "7.DI 32x24VDC BA_6"
+    },
+    {
+      "slot": 8,
+      "enable": true,
+      "start_addr": 236,
+      "channel_count": 32,
+      "name": "8.DI 32x24VDC BA_2"
+    },
+    {
+      "slot": 9,
+      "enable": true,
+      "start_addr": 240,
+      "channel_count": 32,
+      "name": "9.DI 32x24VDC BA_3"
+    },
+    {
+      "slot": 10,
+      "enable": true,
+      "start_addr": 244,
+      "channel_count": 32,
+      "name": "10.DI 32x24VDC BA_4"
+    },
+    {
+      "slot": 11,
+      "enable": true,
+      "start_addr": 280,
+      "channel_count": 32,
+      "name": "11.DI 32x24VDC BA_1"
+    },
+    {
+      "slot": 12,
+      "enable": true,
+      "start_addr": 284,
+      "channel_count": 32,
+      "name": "12.DI 32x24VDC BA_2"
+    },
+    {
+      "slot": 13,
+      "enable": true,
+      "start_addr": 288,
+      "channel_count": 32,
+      "name": "13.DI 32x24VDC BA_3"
+    },
+    {
+      "slot": 14,
+      "enable": true,
+      "start_addr": 292,
+      "channel_count": 32,
+      "name": "14.DI 32x24VDC BA_4"
+    },
+    {
+      "slot": 15,
+      "enable": true,
+      "start_addr": 296,
+      "channel_count": 32,
+      "name": "15.DI 32x24VDC BA_5"
+    },
+    {
+      "slot": 16,
+      "enable": true,
+      "start_addr": 300,
+      "channel_count": 32,
+      "name": "16.DI 32x24VDC BA_6"
+    },
+    {
+      "slot": 17,
+      "enable": true,
+      "start_addr": 304,
+      "channel_count": 32,
+      "name": "17.DI 32x24VDC BA_7"
+    },
+    {
+      "slot": 18,
+      "enable": true,
+      "start_addr": 308,
+      "channel_count": 32,
+      "name": "18.DI 32x24VDC BA_8"
+    },
+    {
+      "slot": 19,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 20,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    }
+  ],
+  "dq": [
+    {
+      "slot": 1,
+      "enable": true,
+      "start_addr": 0,
+      "channel_count": 32,
+      "name": "1.DQ 32x24VDC/0.5A BA_1"
+    },
+    {
+      "slot": 2,
+      "enable": true,
+      "start_addr": 4,
+      "channel_count": 32,
+      "name": "2.DQ 32x24VDC/0.5A BA_2"
+    },
+    {
+      "slot": 3,
+      "enable": true,
+      "start_addr": 8,
+      "channel_count": 32,
+      "name": "3.DQ 32x24VDC/0.5A BA_3"
+    },
+    {
+      "slot": 4,
+      "enable": true,
+      "start_addr": 28,
+      "channel_count": 32,
+      "name": "4.TM PosInput 2_1"
+    },
+    {
+      "slot": 5,
+      "enable": true,
+      "start_addr": 52,
+      "channel_count": 32,
+      "name": "5.TM PosInput 2_2"
+    },
+    {
+      "slot": 6,
+      "enable": true,
+      "start_addr": 76,
+      "channel_count": 32,
+      "name": "6.DQ 32x24VDC/0.5A BA_4"
+    },
+    {
+      "slot": 7,
+      "enable": true,
+      "start_addr": 80,
+      "channel_count": 32,
+      "name": "7.DQ 32x24VDC/0.5A BA_1"
+    },
+    {
+      "slot": 8,
+      "enable": true,
+      "start_addr": 84,
+      "channel_count": 32,
+      "name": "8.DQ 32x24VDC/0.5A BA_2"
+    },
+    {
+      "slot": 9,
+      "enable": true,
+      "start_addr": 88,
+      "channel_count": 32,
+      "name": "9.DQ 32x24VDC/0.5A BA_1"
+    },
+    {
+      "slot": 10,
+      "enable": true,
+      "start_addr": 92,
+      "channel_count": 32,
+      "name": "10.DQ 32x24VDC/0.5A BA_1"
+    },
+    {
+      "slot": 11,
+      "enable": true,
+      "start_addr": 96,
+      "channel_count": 32,
+      "name": "11.DQ 32x24VDC/0.5A BA_1"
+    },
+    {
+      "slot": 12,
+      "enable": true,
+      "start_addr": 100,
+      "channel_count": 32,
+      "name": "12.DQ 32x24VDC/0.5A BA_1"
+    },
+    {
+      "slot": 13,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 14,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 15,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 16,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 17,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 18,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 19,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    },
+    {
+      "slot": 20,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 16,
+      "name": ""
+    }
+  ],
+  "ai": [
+    {
+      "slot": 1,
+      "enable": true,
+      "start_addr": 8,
+      "channel_count": 8,
+      "name": "1.AI 8xU/I/RTD/TC ST_1",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 2,
+      "enable": true,
+      "start_addr": 24,
+      "channel_count": 8,
+      "name": "2.AI 8xU/I/RTD/TC ST_2",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 3,
+      "enable": true,
+      "start_addr": 40,
+      "channel_count": 8,
+      "name": "3.AI 8xU/I/RTD/TC ST_3",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 4,
+      "enable": true,
+      "start_addr": 56,
+      "channel_count": 8,
+      "name": "4.AI 8xU/I/RTD/TC ST_4",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 5,
+      "enable": true,
+      "start_addr": 72,
+      "channel_count": 8,
+      "name": "5.AI 8xU/I/RTD/TC ST_5",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 6,
+      "enable": true,
+      "start_addr": 88,
+      "channel_count": 8,
+      "name": "6.AI 8xU/I/RTD/TC ST_6",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 7,
+      "enable": true,
+      "start_addr": 104,
+      "channel_count": 8,
+      "name": "7.AI 8xU/I/RTD/TC ST_7",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 8,
+      "enable": true,
+      "start_addr": 128,
+      "channel_count": 8,
+      "name": "8.AI 8xU/I/RTD/TC ST_1",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 9,
+      "enable": true,
+      "start_addr": 144,
+      "channel_count": 8,
+      "name": "9.AI 8xU/I/RTD/TC ST_2",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 10,
+      "enable": true,
+      "start_addr": 248,
+      "channel_count": 8,
+      "name": "10.AI 8xU/I/RTD/TC ST_8",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 11,
+      "enable": true,
+      "start_addr": 264,
+      "channel_count": 8,
+      "name": "11.AI 8xU/I/RTD/TC ST_9",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 12,
+      "enable": true,
+      "start_addr": 312,
+      "channel_count": 8,
+      "name": "12.AI 8xU/I/RTD/TC ST_1",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 13,
+      "enable": true,
+      "start_addr": 328,
+      "channel_count": 8,
+      "name": "13.AI 8xU/I/RTD/TC ST_2",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 14,
+      "enable": true,
+      "start_addr": 344,
+      "channel_count": 8,
+      "name": "14.AI 8xU/I/RTD/TC ST_3",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 15,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 16,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 17,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 18,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 19,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 20,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    }
+  ],
+  "aq": [
+    {
+      "slot": 1,
+      "enable": true,
+      "start_addr": 12,
+      "channel_count": 8,
+      "name": "1.AQ 8xU/I HS_1",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 2,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 3,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 4,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 5,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 6,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 7,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 8,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 9,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 10,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 11,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 12,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 13,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 14,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 15,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 16,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 17,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 18,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 19,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    },
+    {
+      "slot": 20,
+      "enable": false,
+      "start_addr": 0,
+      "channel_count": 8,
+      "name": "",
+      "raw_full": 27648,
+      "eng_min_ma": 4,
+      "eng_full_ma": 20
+    }
+  ],
+  "ai_announce_threshold_pct": 10,
+  "ai_announce_cooldown_ms": 1000,
+  "ai_settle_ms": 300,
+  "_import": {
+    "source": "tia_cax_aml",
+    "modules_found": [
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_1",
+        "start_addr": 8,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_2",
+        "start_addr": 24,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_3",
+        "start_addr": 40,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_4",
+        "start_addr": 56,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_5",
+        "start_addr": 72,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_6",
+        "start_addr": 88,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_7",
+        "start_addr": 104,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_1",
+        "start_addr": 128,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_2",
+        "start_addr": 144,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_8",
+        "start_addr": 248,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_9",
+        "start_addr": 264,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_1",
+        "start_addr": 312,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_2",
+        "start_addr": 328,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "ai",
+        "name": "AI 8xU/I/RTD/TC ST_3",
+        "start_addr": 344,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "aq",
+        "name": "AQ 8xU/I HS_1",
+        "start_addr": 12,
+        "length": 128,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_1",
+        "start_addr": 0,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_1",
+        "start_addr": 4,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_2",
+        "start_addr": 120,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_3",
+        "start_addr": 124,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_4",
+        "start_addr": 224,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_5",
+        "start_addr": 228,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_6",
+        "start_addr": 232,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_2",
+        "start_addr": 236,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_3",
+        "start_addr": 240,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_4",
+        "start_addr": 244,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_1",
+        "start_addr": 280,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_2",
+        "start_addr": 284,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_3",
+        "start_addr": 288,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_4",
+        "start_addr": 292,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_5",
+        "start_addr": 296,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_6",
+        "start_addr": 300,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_7",
+        "start_addr": 304,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "di",
+        "name": "DI 32x24VDC BA_8",
+        "start_addr": 308,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "DQ 32x24VDC/0.5A BA_1",
+        "start_addr": 0,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "DQ 32x24VDC/0.5A BA_2",
+        "start_addr": 4,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "DQ 32x24VDC/0.5A BA_3",
+        "start_addr": 8,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "TM PosInput 2_1",
+        "start_addr": 28,
+        "length": 192,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "TM PosInput 2_2",
+        "start_addr": 52,
+        "length": 192,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "DQ 32x24VDC/0.5A BA_4",
+        "start_addr": 76,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "DQ 32x24VDC/0.5A BA_1",
+        "start_addr": 80,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "DQ 32x24VDC/0.5A BA_2",
+        "start_addr": 84,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "DQ 32x24VDC/0.5A BA_1",
+        "start_addr": 88,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "DQ 32x24VDC/0.5A BA_1",
+        "start_addr": 92,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "DQ 32x24VDC/0.5A BA_1",
+        "start_addr": 96,
+        "length": 32,
+        "channels": []
+      },
+      {
+        "kind": "dq",
+        "name": "DQ 32x24VDC/0.5A BA_1",
+        "start_addr": 100,
+        "length": 32,
+        "channels": []
+      }
+    ]
+  }
+}
