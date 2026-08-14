@@ -25,13 +25,13 @@
   <main>
     <section id="page-connect" class="page active">
       <h1>连接 PLC</h1>
-      <p class="hint">首次可勾选 Mock 模式，无需真实 PLC 验证界面与语音。</p>
+      <p class="hint">首次可勾选 Mock 模式，无需真实 PLC 验证界面与语音。真机须在 CPU 勾选「允许来自远程对象的 PUT/GET 通信」并重新下载，否则会报 0x81/0x04。</p>
       <div class="form-grid">
         <label>IP <input id="plcIp" value="192.168.0.1" /></label>
         <label>机架 <input id="plcRack" type="number" value="0" /></label>
         <label>槽位 <input id="plcSlot" type="number" value="1" /></label>
-        <label>配置 DB <input id="dbConfig" type="number" value="10" /></label>
-        <label>运行 DB <input id="dbRuntime" type="number" value="11" /></label>
+        <label>配置 DB <input id="dbConfig" type="number" value="810" /></label>
+        <label>运行 DB <input id="dbRuntime" type="number" value="811" /></label>
         <label class="check"><input id="mockMode" type="checkbox" checked /> Mock 模式</label>
         <label>语音速度
           <select id="voiceRate">
@@ -179,6 +179,7 @@
             <li>首次 <code>setup.bat</code>，每次 <code>run.bat</code>；Mock 验证 example_cabinet</li>
             <li>界面按 连接 / 配置 / DI / AI / DQ / AQ 逐页说明</li>
             <li>Portal 导出：附加已打开工程；支持 V20 / V21</li>
+            <li>真机须勾选 PUT/GET；通检 DB 改为 810/811；不再提供 Main.xml（在对方 OB1 里调用 FC）</li>
           </ul>
           <h3>2026-07-23</h3>
           <ul>
@@ -220,7 +221,7 @@
             <li><b>DQ</b>：选模块，点通道强制输出并听通道号，万用表测端子。</li>
             <li><b>AQ</b>：PLC 输出 4～11 mA 循环阶梯电流，本页监视。</li>
           </ol>
-          <p class="hint">真机通检前需在 TIA 下载通检 DB/SCL（见仓库 <code>plc/</code>、<code>docs/</code>）。笔记本与 PLC 同网段，放行 TCP 102。</p>
+          <p class="hint">真机：CPU 勾选「允许来自远程对象的 PUT/GET 通信」并重新下载；导入 DB810/DB811 + <code>FC_IO_Apply.scl</code>，在对方已有 OB1 中调用（不要覆盖 Main）。笔记本与 PLC 同网段，放行 TCP 102。</p>
         </div>
 
         <div class="help-pane" data-help-pane="portal">
@@ -317,7 +318,7 @@ python scripts/generate_wavs.py</pre>
           <h3>其它</h3>
           <table class="help-table">
             <tr><th>脚本</th><th>作用</th></tr>
-            <tr><td><code>scripts\build_workspace_xml.py</code></td><td>重新生成 <code>workspace/</code> 下 UDT/DB/Main 的 Openness XML（通检 PLC 程序导入用，非柜配置）。</td></tr>
+            <tr><td><code>scripts\build_workspace_xml.py</code></td><td>重新生成 <code>workspace/</code> 下 UDT/DB 的 Openness XML（不生成 Main，避免覆盖对方 OB1）。</td></tr>
           </table>
         </div>
 

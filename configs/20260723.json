@@ -4,8 +4,8 @@
     "ip": "192.168.100.1",
     "rack": 0,
     "slot": 1,
-    "db_config": 10,
-    "db_runtime": 11,
+    "db_config": 810,
+    "db_runtime": 811,
     "poll_ms": 50
   },
   "di": [

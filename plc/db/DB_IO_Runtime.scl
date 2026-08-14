@@ -1,4 +1,4 @@
-(* DB_IO_Runtime - 建议编号 DB11，属性：非优化块访问 *)
+(* DB_IO_Runtime - 建议编号 DB811，属性：非优化块访问 *)
 DATA_BLOCK "DB_IO_Runtime"
 { S7_Optimized_Access := 'FALSE' }
 VERSION : 0.1

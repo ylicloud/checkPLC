@@ -17,7 +17,7 @@
       <MemoryLayout>Standard</MemoryLayout>
       <Name>DB_IO_Runtime</Name>
       <Namespace />
-      <Number>11</Number>
+      <Number>811</Number>
       <ProgrammingLanguage>DB</ProgrammingLanguage>
     </AttributeList>
     <ObjectList>
@@ -26,7 +26,7 @@
           <MultilingualTextItem ID="2" CompositionName="Items">
             <AttributeList>
               <Culture>zh-CN</Culture>
-              <Text>IO test runtime DB11 non-optimized</Text>
+              <Text>IO test runtime DB811 non-optimized</Text>
             </AttributeList>
           </MultilingualTextItem>
         </ObjectList>

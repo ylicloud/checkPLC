@@ -35,8 +35,8 @@ class S7Bridge:
         self.ip = ""
         self.rack = 0
         self.slot = 1
-        self.db_config = 10
-        self.db_runtime = 11
+        self.db_config = 810
+        self.db_runtime = 811
         # 过程映像按字节地址；柜体常有 I280+ / IW312+，256 会截断读导致扫描 IndexError
         self._mock_i = bytearray(1024)
         self._mock_q = bytearray(1024)
@@ -88,7 +88,7 @@ class S7Bridge:
                 f"{msg}\n"
                 f"【Invalid address 0x05】写入 {db_hint} 失败，常见原因：\n"
                 "1) 该 DB 仍是「优化的块访问」→ 属性里取消优化，重新下载；\n"
-                "2) 块编号不是 Web 填的 10/11（看 DB 属性里的编号，改 Web 连接页）；\n"
+                "2) 块编号不是 Web 填的 810/811（看 DB 属性里的编号，改 Web 连接页）；\n"
                 "3) DB 未下载到 CPU，或名称对但编号不同。\n"
                 "DI 可读过程映像可先测；DQ 强制必须能写运行 DB。"
             )

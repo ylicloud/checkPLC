@@ -10,8 +10,8 @@ class ConnectRequest(BaseModel):
     rack: int = 0
     slot: int = 1
     mock: bool = False
-    db_config: int = 10
-    db_runtime: int = 11
+    db_config: int = 810
+    db_runtime: int = 811
 
 
 class DqSetRequest(BaseModel):

@@ -106,11 +106,11 @@ def db_config() -> str:
       <MemoryLayout>Standard</MemoryLayout>
       <Name>DB_IO_Config</Name>
       <Namespace />
-      <Number>10</Number>
+      <Number>810</Number>
       <ProgrammingLanguage>DB</ProgrammingLanguage>
     </AttributeList>
     <ObjectList>
-{ml("IO test config DB10 non-optimized", 1)}
+{ml("IO test config DB810 non-optimized", 1)}
 {ml("DB_IO_Config", 3, "Title")}
     </ObjectList>
   </SW.Blocks.GlobalDB>"""
@@ -135,11 +135,11 @@ def db_runtime() -> str:
       <MemoryLayout>Standard</MemoryLayout>
       <Name>DB_IO_Runtime</Name>
       <Namespace />
-      <Number>11</Number>
+      <Number>811</Number>
       <ProgrammingLanguage>DB</ProgrammingLanguage>
     </AttributeList>
     <ObjectList>
-{ml("IO test runtime DB11 non-optimized", 1)}
+{ml("IO test runtime DB811 non-optimized", 1)}
 {ml("DB_IO_Runtime", 3, "Title")}
     </ObjectList>
   </SW.Blocks.GlobalDB>"""
@@ -300,6 +300,7 @@ END_FOR;
 
 
 def main_ob() -> str:
+    # 仅作参考，不要写入 workspace/Main.xml（会覆盖对方已有 OB1）
     # LAD call FC_IO_Apply
     return wrap(
         f"""  <SW.Blocks.OB ID="0">
@@ -355,22 +356,34 @@ def main_ob() -> str:
 def readme() -> str:
     return """# Workspace 导入说明
 
+**不要导入 Main / OB1。** 对方工程通常已有主程序，覆盖后用户逻辑会丢。本仓库已删除 `Main.xml`。
+
 ## 推荐导入顺序
+
+在 TIA **VCI / 工作区**中，按顺序拖到项目：
 
 | 顺序 | 文件 | 拖到 |
 |------|------|------|
 | 1 | `UDT_DigSlot.xml` | PLC 数据类型 |
 | 2 | `UDT_AnaSlot.xml` | PLC 数据类型 |
-| 3 | `DB_IO_Config.xml` | 程序块 |
-| 4 | `DB_IO_Runtime.xml` | 程序块 |
-| 5 | **`FC_IO_Apply.scl`** | 程序块（只用 scl） |
-| 6 | `Main.xml` | OB1 |
+| 3 | `DB_IO_Config.xml` | 程序块（编号 **810**，取消优化访问） |
+| 4 | `DB_IO_Runtime.xml` | 程序块（编号 **811**，取消优化访问） |
+| 5 | **`FC_IO_Apply.scl`** | 程序块（**用 scl，不要用 xml**） |
 
-然后编译并下载。
+然后：在对方**已有的 OB1 / Main** 里加一个网络，调用 `FC_IO_Apply`（写法见 `plc/scl/OB1_Call.scl`）。再 **编译 → 下载**。
 
-## 注意
+## 关于 FC
 
-FC 请用 **`FC_IO_Apply.scl`**。手写 Openness SCL XML 会报 `token is not supported`，已不再提供 xml。
+- Openness 对 SCL 的 XML 语句格式要求极严，手写 XML 易报错（如 `The token is not supported`）。
+- **请使用 `FC_IO_Apply.scl`**（已验证可成功导入）。
+- 已不再提供 `FC_IO_Apply.xml` / `Main.xml`，避免误拖覆盖。
+
+## 导入后检查
+
+- DB810 / DB811：取消「优化的块访问」
+- 现有 OB1 中已调用 `FC_IO_Apply`（不要用本仓库的 Main 覆盖对方主程序）
+- CPU 已勾选 **允许来自远程对象的 PUT/GET 通信** 并重新下载
+- Web 连接页：配置 DB = `810`，运行 DB = `811`（若对方工程已占用这两个号，在 TIA 改块号并同步改连接页）
 """
 
 
@@ -382,7 +395,6 @@ def main() -> None:
         "UDT_AnaSlot.xml": udt_ana(),
         "DB_IO_Config.xml": db_config(),
         "DB_IO_Runtime.xml": db_runtime(),
-        "Main.xml": main_ob(),
         "README_IMPORT.md": readme(),
     }
     for name, content in files.items():
@@ -395,11 +407,12 @@ def main() -> None:
     if src.exists():
         dst.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
         print("wrote", dst.relative_to(ROOT))
-    # remove obsolete broken xml if present
-    old = OUT / "FC_IO_Apply.xml"
-    if old.exists():
-        old.unlink()
-        print("removed", old.relative_to(ROOT))
+    # 不再导出 Main.xml，避免覆盖对方已有 OB1
+    for obsolete in ("FC_IO_Apply.xml", "Main.xml"):
+        old = OUT / obsolete
+        if old.exists():
+            old.unlink()
+            print("removed", old.relative_to(ROOT))
 
 
 if __name__ == "__main__":

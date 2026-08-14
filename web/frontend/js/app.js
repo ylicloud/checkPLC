@@ -276,8 +276,8 @@ async function loadCabinet(name) {
   $("plcIp").value = cabinet.plc?.ip || "192.168.0.1";
   $("plcRack").value = cabinet.plc?.rack ?? 0;
   $("plcSlot").value = cabinet.plc?.slot ?? 1;
-  $("dbConfig").value = cabinet.plc?.db_config ?? 10;
-  $("dbRuntime").value = cabinet.plc?.db_runtime ?? 11;
+  $("dbConfig").value = cabinet.plc?.db_config ?? 810;
+  $("dbRuntime").value = cabinet.plc?.db_runtime ?? 811;
   dqBuiltKey = "";
   renderSlots();
   ensureDqSlotOptions();

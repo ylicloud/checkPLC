@@ -1,4 +1,4 @@
-(* DB_IO_Config - 建议编号 DB10
+(* DB_IO_Config - 建议编号 DB810
    属性：取消「优化的块访问」
    AI/AQ 初值：RawFull=27648，EngMax_mA=20.0，EngMin_mA=4.0（4~20mA）
 *)

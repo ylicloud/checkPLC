@@ -6,14 +6,14 @@
 |------|------|
 | `udt/UDT_DigSlot.scl` | DI/DQ 槽位结构 |
 | `udt/UDT_AnaSlot.scl` | AI/AQ 槽位结构（默认 4～20mA） |
-| `db/DB_IO_Config.scl` | 配置 DB（建议编号 10） |
-| `db/DB_IO_Runtime.scl` | 运行 DB（建议编号 11） |
+| `db/DB_IO_Config.scl` | 配置 DB（建议编号 **810**） |
+| `db/DB_IO_Runtime.scl` | 运行 DB（建议编号 **811**） |
 | `scl/FC_IO_Apply.scl` | 每周期：DQ 强制→Q，AQ 阶梯电流→QW |
-| `scl/OB1_Call.scl` | OB1 调用示例 |
+| `scl/OB1_Call.scl` | 在**现有 OB1** 中调用 FC 的示例（不要覆盖对方 Main） |
 
 ## 字节偏移（非优化 DB，供 Web/snap7）
 
-### DB_IO_Config（DB10）
+### DB_IO_Config（DB810）
 
 每个 **DigSlot** 占 **8** 字节：
 
@@ -49,7 +49,7 @@
 | AQ[1..20] | 560 | 320 |
 | **总长** | | **880** |
 
-### DB_IO_Runtime（DB11）
+### DB_IO_Runtime（DB811）
 
 | 区域 | 偏移 | 长度 | 说明 |
 |------|------|------|------|

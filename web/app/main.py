@@ -102,8 +102,8 @@ def save_config(body: SaveConfigRequest) -> dict:
 
     scanner.set_cabinet(cab)
     plc = cab.get("plc", {})
-    bridge.db_config = int(plc.get("db_config", 10))
-    bridge.db_runtime = int(plc.get("db_runtime", 11))
+    bridge.db_config = int(plc.get("db_config", 810))
+    bridge.db_runtime = int(plc.get("db_runtime", 811))
     pushed = False
     if body.push_to_plc and bridge.connected:
         scanner.push_config_to_plc()

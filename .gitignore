@@ -17,3 +17,6 @@ tools/tia-openness-export/obj/
 *.aml
 !tools/tia-openness-export/samples/*.aml
 
+# 发给同事的 zip（pack.bat 生成）
+dist/
+

@@ -1,4 +1,4 @@
-"""DB10 / DB11 fixed offsets matching S7 non-optimized UDT layout.
+"""DB810 / DB811 fixed offsets matching S7 non-optimized UDT layout.
 
 UDT_DigSlot (Standard): Bool@0.0 + pad + UInt@2 + USInt@4 + USInt@5 = 6 bytes
 UDT_AnaSlot (Standard): ... + Int@6 + Real@8 + Real@12 = 16 bytes

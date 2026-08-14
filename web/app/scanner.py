@@ -207,8 +207,8 @@ class IoScanner:
     def push_config_to_plc(self) -> None:
         with self._lock:
             data = db_layout.pack_config_db(self._cabinet)
-            bridge.db_config = int(self._cabinet.get("plc", {}).get("db_config", 10))
-            bridge.db_runtime = int(self._cabinet.get("plc", {}).get("db_runtime", 11))
+            bridge.db_config = int(self._cabinet.get("plc", {}).get("db_config", 810))
+            bridge.db_runtime = int(self._cabinet.get("plc", {}).get("db_runtime", 811))
             size10 = bridge.get_db_size(bridge.db_config)
             size11 = bridge.get_db_size(bridge.db_runtime)
             try:

@@ -1,4 +1,6 @@
-(* OB1 调用示例：将下列网络逻辑并入现有 Main / OB1 *)
+(* 不要导入本仓库的 Main / OB1。
+   对方工程通常已有主程序：在现有 OB1（或循环 OB）里加一个网络，调用 FC_IO_Apply。
+   下面仅作写法示例，不要整块覆盖用户的 Main。 *)
 ORGANIZATION_BLOCK "Main"
 { S7_Optimized_Access := 'TRUE' }
 VERSION : 0.1
